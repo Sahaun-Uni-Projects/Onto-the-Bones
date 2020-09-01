@@ -8,6 +8,7 @@
 #endif
 
 enum OBJECT_TYPE {
+	NOONE,
 	PLAYER,
 	ENEMY
 };

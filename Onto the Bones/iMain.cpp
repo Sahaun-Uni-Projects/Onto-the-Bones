@@ -20,9 +20,7 @@ void iPassiveMouse(int x, int y) {}
 void iMouseMove(int mx, int my) {}
 void iMouse(int button, int state, int mx, int my){}
 void iKeyboard(unsigned char key) {
-	hdir = 0;
-	vdir = 0;
-
+	input_refresh();
 	switch (key) {
 		case 'd': hdir =  1; break;
 		case 'a': hdir = -1; break;
@@ -31,7 +29,16 @@ void iKeyboard(unsigned char key) {
 		default: break;
 	}
 }
-void iSpecialKeyboard(unsigned char key) {}
+void iSpecialKeyboard(unsigned char key) {
+	input_refresh();
+	switch (key) {
+		case GLUT_KEY_RIGHT: hdir =  1; break;
+		case GLUT_KEY_LEFT : hdir = -1; break;
+		case GLUT_KEY_UP   : vdir =  1; break;
+		case GLUT_KEY_DOWN : vdir = -1; break;
+		default: break;
+	}
+}
 
 // Program starts here
 #define WIN_W 960
@@ -48,11 +55,11 @@ void iSpecialKeyboard(unsigned char key) {}
 
 #define DEFAULT_LEVEL_LAYOUT_DELIMITER ' '
 
-queue<OBJECT_TYPE> InputQueue;
+//queue<OBJECT_TYPE> InputQueue;
+queue<int> InputQueue;
 
 // Globals
-Instance* player;
-Instance* enemy;
+Instance *player, *enemy, *noone;
 int EnemyMoveTimer = -1;
 
 vector<string> layout;
@@ -172,46 +179,56 @@ void move() {
 			Instance* inst = InstancesList[i];
 			for (int j = 0; j < inst->get_moves(); ++j) {
 				//InputQueue.push(inst->get_object_type());
-				InputQueue.push(inst->get_object_type());
+				InputQueue.push(i);
 			}
 		}
 	} else {
-		if (InputQueue.front() == PLAYER) {
+		int curr = InputQueue.front();
+		
+		if (InstancesList[curr] == noone) {
+			// Instance is destroyed
+			InputQueue.pop();
+		} else {
+			// Instance exists
+			if (InstancesList[InputQueue.front()] == player) {
 				int r = player->get_row(), c = player->get_col();
-			if ((hdir || vdir) && cell_is_valid(r+vdir, c+hdir)) {
-				player->move_relative(vdir, hdir);
+				if ((hdir || vdir) && cell_is_valid(r+vdir, c+hdir)) {
+					// Move
+					player->move_relative(vdir, hdir);
+					
+					// Handle Inputs
+					input_refresh();
 
-				input_refresh();
+					InputQueue.pop();
+					HeatMap = generate_heatmap(player);
+					for (int i = 0; i < GridRows; ++i) {
+						for (int j = 0; j < GridCols; ++j) cout << HeatMap[i][j] << " ";
+						cout << endl;
+					}
+				}
+			} else {
+				int mr = INFINITY, mc = INFINITY, dr = 0, dc = 0,
+					row = enemy->get_row(), col = enemy->get_col();
+
+				if (cell_in_bounds(row-1, col)) mr = min(mr, HeatMap[row-1][col]);
+				if (cell_in_bounds(row+1, col)) mr = min(mr, HeatMap[row+1][col]);
+				if (cell_in_bounds(row, col-1)) mc = min(mc, HeatMap[row][col-1]);
+				if (cell_in_bounds(row, col+1)) mc = min(mc, HeatMap[row][col+1]);
+
+				cout << mr << " " << mc << endl;
+
+				if ((mr != INFINITY) && (mc != INFINITY)) {
+					if (mc < mr) {
+						if (cell_in_bounds(row, col-1) && (HeatMap[row][col-1] == mc)) enemy->move_relative(0, -1);
+							else if (cell_in_bounds(row, col+1) && (HeatMap[row][col+1] == mc)) enemy->move_relative(0, 1);
+					} else {
+						if (cell_in_bounds(row-1, col) && (HeatMap[row-1][col] == mr)) enemy->move_relative(-1, 0);
+							else if (cell_in_bounds(row+1, col) && (HeatMap[row+1][col] == mr)) enemy->move_relative(1, 0);
+					}
+				}
 
 				InputQueue.pop();
-				HeatMap = generate_heatmap(player);
-				for (int i = 0; i < GridRows; ++i) {
-					for (int j = 0; j < GridCols; ++j) cout << HeatMap[i][j] << " ";
-					cout << endl;
-				}
 			}
-		} else {
-			int mr = INFINITY, mc = INFINITY, dr = 0, dc = 0,
-				row = enemy->get_row(), col = enemy->get_col();
-
-			if (cell_in_bounds(row-1, col)) mr = min(mr, HeatMap[row-1][col]);
-			if (cell_in_bounds(row+1, col)) mr = min(mr, HeatMap[row+1][col]);
-			if (cell_in_bounds(row, col-1)) mc = min(mc, HeatMap[row][col-1]);
-			if (cell_in_bounds(row, col+1)) mc = min(mc, HeatMap[row][col+1]);
-
-			cout << mr << " " << mc << endl;
-
-			if ((mr != INFINITY) && (mc != INFINITY)) {
-				if (mc < mr) {
-					if (cell_in_bounds(row, col-1) && (HeatMap[row][col-1] == mc)) enemy->move_relative(0, -1);
-						else if (cell_in_bounds(row, col+1) && (HeatMap[row][col+1] == mc)) enemy->move_relative(0, 1);
-				} else {
-					if (cell_in_bounds(row-1, col) && (HeatMap[row-1][col] == mr)) enemy->move_relative(-1, 0);
-						else if (cell_in_bounds(row+1, col) && (HeatMap[row+1][col] == mr)) enemy->move_relative(1, 0);
-				}
-			}
-
-			InputQueue.pop();
 		}
 	}
 }
