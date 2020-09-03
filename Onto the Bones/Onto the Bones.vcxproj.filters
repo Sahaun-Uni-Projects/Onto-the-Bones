@@ -44,8 +44,17 @@
     <ClInclude Include="otb_input.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="otb_sprites.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="otb_utils.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="GLUT32.DLL" />
+    <None Include="Sprites\Head.png">
+      <Filter>Resource Files</Filter>
+    </None>
   </ItemGroup>
 </Project>

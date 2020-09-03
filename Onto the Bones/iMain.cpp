@@ -1,24 +1,33 @@
 #ifndef __INIT
 #include <iostream>
-#include <string>
+#include <string.h>
 #include <vector>
 #include <queue>
+#include <unordered_map>
+#include <functional>
 #include "iGraphics.h"
 #define __INIT
 #endif
 
-#include "otb_input.h"
+#include "otb_utils.h"
+#include "otb_sprites.h"
 #include "otb_graphics.h"
+#include "otb_input.h"
 #include "otb_instances.h"
+
 using namespace std;
 
 // Program starts here
 #define INFINITY 2147483647
 
-#define WIN_W 960
-#define WIN_H 540
+#define WIN_WIDTH  960
+#define WIN_HEIGHT 540
+#define WIN_TITLE  "Onto the Bones"
+
 #define GAME_X 30
 #define GAME_Y 30
+#define GAME_STEP_TIMER 100
+
 #define CELL_W 48
 #define CELL_H 32
 
@@ -129,6 +138,25 @@ void draw_circle_at_cell(int row, int col, int color = draw_get_color(), bool fi
 	double w = CELL_W/2., h = CELL_H/2.;
 	draw_circle_color(coord_x(col)+w, coord_y(row)+h, min(w,h), color, filled);
 }
+void draw_sprite_at_cell_offset(int row, int col, Sprite* spr, int dx, int dy) {
+	draw_sprite(coord_x(col)+dx, coord_y(row)+dy, spr);
+}
+void draw_sprite_at_cell(int row, int col, Sprite* spr) {
+	draw_sprite_at_cell_offset(row, col, spr, round((CELL_W-spr->get_width())/2.), round((CELL_H-spr->get_height())/2.));
+}
+void draw_instance(Instance *inst) {
+	if (!instance_exists(inst)) return;
+	draw_sprite_at_cell(inst->get_row(), inst->get_col(), inst->get_sprite());
+}
+
+void hit_instance(Instance *inst, int damage) {
+	if (!instance_exists(inst)) return;
+	inst->hit(damage);
+	if (inst->get_hp() <= 0) {
+		int pos = instance_get_number(inst);
+		if (pos > -1) InstancesList[pos] = noone;
+	}
+}
 
 void ev_step() {
 	if (InputQueue.empty()) {
@@ -155,16 +183,8 @@ void ev_step() {
 				if ((hdir || vdir) && cell_is_valid(r,c)) {
 					// Move
 					Instance* other = instance_get_at_cell(r,c);
-					if (other != noone) {
-						// Enemy found
-						other->hit(1);
-						if (other->get_hp() <= 0) {
-							int pos = instance_get_number(other);
-							if (pos > -1) InstancesList[pos] = noone;
-						}
-					} else {
-						inst->set_pos(r,c);
-					}
+					if (other != noone) hit_instance(other, 1);
+						else inst->set_pos(r,c);
 					
 					// Handle Inputs
 					input_refresh();
@@ -186,9 +206,9 @@ void ev_step() {
 				if (cell_in_bounds(row, col-1)) mc = min(mc, HeatMap[row][col-1]);
 				if (cell_in_bounds(row, col+1)) mc = min(mc, HeatMap[row][col+1]);
 
-				cout << mr << " " << mc << endl;
-
-				if ((mr != INFINITY) && (mc != INFINITY)) {
+				if (!mr || !mc) {
+					hit_instance(player, 1);
+				} else if ((mr != INFINITY) && (mc != INFINITY)) {
 					if (mc < mr) {
 						if (cell_in_bounds(row, col-1) && (HeatMap[row][col-1] == mc)) inst->move_relative(0, -1);
 							else if (cell_in_bounds(row, col+1) && (HeatMap[row][col+1] == mc)) inst->move_relative(0, 1);
@@ -205,6 +225,7 @@ void ev_step() {
 }
 
 void ev_draw() {
+	// Draw world
 	draw_set_color(c_white);
 	for (int i = 0; i < GridRows; ++i) {
 		for (int j = 0; j < GridCols; ++j) {
@@ -212,11 +233,8 @@ void ev_draw() {
 		}
 	}
 	
-	for (int i = 0; i < int(InstancesList.size()); ++i) {
-		Instance* inst = InstancesList[i];
-		if (!instance_exists(inst)) continue;
-		draw_rectangle_at_cell(inst->get_row(), inst->get_col(), c_red);
-	}
+	// Draw instances
+	for (int i = 0; i < int(InstancesList.size()); ++i) draw_instance(InstancesList[i]);
 }
 
 void iDraw() {
@@ -225,6 +243,9 @@ void iDraw() {
 }
 
 void init() {
+	// Load sprites
+	sprites_init();
+
 	// Initialize World
 	layout.push_back("1 1 1 0 0 1 0 1 1 1 0");
 	layout.push_back("1 1 1 0 0 1 0 1 1 1 0");
@@ -241,18 +262,18 @@ void init() {
 	
 	// Initialize Instances
 	noone  = new Noone();
-	player = instance_create(2, 0, 2, 5, PLAYER);
-	enemy  = instance_create(3, 9, 1, 3, ENEMY);
-	enemy2 = instance_create(2, 2, 2, 2, ENEMY);
+	player = instance_create(2, 0, 2, 5, sPlayer, PLAYER);
+	enemy  = instance_create(3, 9, 1, 3, sEnemy,  ENEMY );
+	enemy2 = instance_create(2, 2, 2, 2, sEnemy,  ENEMY );
 }
 
 int main() {
 	// Initialization
-	iInitialize(WIN_W, WIN_H, "Demo", 800, 200);
+	iInitialize(WIN_WIDTH, WIN_HEIGHT, WIN_TITLE, 800, 200);
 	init();
 
 	// Timers
-	timerStep = iSetTimer(100, ev_step);
+	timerStep = iSetTimer(GAME_STEP_TIMER, ev_step);
 
 	// Start
 	iStart();

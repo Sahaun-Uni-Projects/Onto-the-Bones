@@ -64,16 +64,19 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="bitmap_loader.h" />
+    <ClInclude Include="otb_utils.h" />
     <ClInclude Include="glaux.h" />
     <ClInclude Include="glut.h" />
     <ClInclude Include="otb_graphics.h" />
     <ClInclude Include="iGraphics.h" />
     <ClInclude Include="otb_input.h" />
     <ClInclude Include="otb_instances.h" />
+    <ClInclude Include="otb_sprites.h" />
     <ClInclude Include="stb_image.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="GLUT32.DLL" />
+    <None Include="Sprites\Head.png" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

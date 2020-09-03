@@ -14,17 +14,16 @@
 #define c_blue  0x0000FF
 
 /**
-	* System
-	*/
+ * System
+ */
 namespace Sys {
 	int currentColor = c_white;
 	int circleSmoothness = 75;
 };
-
 	
 /**
-	* Color
-	*/
+ * Color
+ */
 int draw_get_color() {
 	return Sys::currentColor;
 }
@@ -53,8 +52,8 @@ void draw_set_color(int red, int green, int blue) {
 
 	
 /**
-	* Drawing
-	*/
+ * Drawing
+ */
 void draw_rectangle_color(double left, double bottom, double dx, double dy, int color, bool filled = false) {
 	int col = draw_get_color();
 	draw_set_color(color);
@@ -77,4 +76,4 @@ void draw_circle_color(double x, double y, double radius, int color, bool filled
 }
 void draw_circle(double x, double y, double radius, bool filled = false, int smoothness = Sys::circleSmoothness) {
 		draw_circle_color(x, y, radius, draw_get_color(), filled, smoothness);
-	}
+}

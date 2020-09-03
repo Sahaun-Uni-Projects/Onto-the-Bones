@@ -15,11 +15,12 @@ enum OBJECT_TYPE {
 
 class Instance {
 	int row, col, moves, hp;
+	Sprite* sprite;
 	OBJECT_TYPE type;
 
 	public:
 		Instance() {}
-		Instance(int row, int col, int moves, int hp, OBJECT_TYPE type) : row(row), col(col), moves(moves), hp(hp), type(type) {}
+		Instance(int row, int col, int moves, int hp, Sprite* sprite, OBJECT_TYPE type) : row(row), col(col), moves(moves), hp(hp), sprite(sprite), type(type) {}
 		
 		int get_row() {
 			return this->row;
@@ -35,6 +36,10 @@ class Instance {
 
 		int get_hp() {
 			return this->hp;
+		}
+
+		Sprite* get_sprite() {
+			return this->sprite;
 		}
 
 		OBJECT_TYPE get_object_type() {
@@ -60,7 +65,6 @@ class Instance {
 		void hit(int damage) {
 			this->hp -= damage;
 			std::cout << hp << " Instance hit.\n";
-			//if (this->hp < 0) instance_destroy(this);
 		}
 
 		~Instance() {
@@ -77,30 +81,30 @@ std::vector<Instance*> InstancesList;
 class Enemy : public Instance {
 	public:
 		Enemy() {}
-		Enemy(int row, int col, int moves, int hp, OBJECT_TYPE type = ENEMY) : Instance(row, col, moves, hp, type) {}
+		Enemy(int row, int col, int moves, int hp, Sprite* sprite, OBJECT_TYPE type = ENEMY) : Instance(row, col, moves, hp, sprite, type) {}
 };
 
 class Player : public Instance {
 	public:
 		Player() {}
-		Player(int row, int col, int moves, int hp, OBJECT_TYPE type = PLAYER) : Instance(row, col, moves, hp, type) {}
+		Player(int row, int col, int moves, int hp, Sprite* sprite, OBJECT_TYPE type = PLAYER) : Instance(row, col, moves, hp, sprite, type) {}
 };
 
 class Noone : public Instance {
 	public:
-		Noone() : Instance(0, 0, 0, 9999, NOONE) {}
+		Noone() : Instance(0, 0, 9999, 9999, sNoone, NOONE) {}
 };
 
 /**
  * Functions
  */
 
-Instance* instance_create(int x, int y, int moves, int hp, OBJECT_TYPE type) {
+Instance* instance_create(int x, int y, int moves, int hp, Sprite* sprite, OBJECT_TYPE type) {
 	Instance* inst;
 	
 	switch (type) {
-		case PLAYER: inst = new Player(x, y, moves, hp); break;
-		case ENEMY : inst = new  Enemy(x, y, moves, hp); break;
+		case PLAYER: inst = new Player(x, y, moves, hp, sprite); break;
+		case ENEMY : inst = new  Enemy(x, y, moves, hp, sprite); break;
 		default: break;
 	}
 
