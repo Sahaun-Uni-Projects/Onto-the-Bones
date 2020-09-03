@@ -68,6 +68,7 @@
     <ClInclude Include="glut.h" />
     <ClInclude Include="otb_graphics.h" />
     <ClInclude Include="iGraphics.h" />
+    <ClInclude Include="otb_input.h" />
     <ClInclude Include="otb_instances.h" />
     <ClInclude Include="stb_image.h" />
   </ItemGroup>

@@ -14,27 +14,35 @@ enum OBJECT_TYPE {
 };
 
 class Instance {
-	int row, col, moves;
-	OBJECT_TYPE object_type;
+	int row, col, moves, hp;
+	OBJECT_TYPE type;
 
 	public:
 		Instance() {}
-		Instance(int row, int col, int moves, OBJECT_TYPE object_type) : row(row), col(col), moves(moves), object_type(object_type) {}
+		Instance(int row, int col, int moves, int hp, OBJECT_TYPE type) : row(row), col(col), moves(moves), hp(hp), type(type) {}
 		
 		int get_row() {
-			return row;
+			return this->row;
 		}
 
 		int get_col() {
-			return col;
+			return this->col;
 		}
 
 		int get_moves() {
-			return moves;
+			return this->moves;
+		}
+
+		int get_hp() {
+			return this->hp;
 		}
 
 		OBJECT_TYPE get_object_type() {
-			return object_type;
+			return this->type;
+		}
+
+		void set_object_type(OBJECT_TYPE type) {
+			this->type = type;
 		}
 
 		bool move_relative(int dr, int dc) {
@@ -48,9 +56,19 @@ class Instance {
 			this->col = col;
 			return true;
 		}
+
+		void hit(int damage) {
+			this->hp -= damage;
+			std::cout << hp << " Instance hit.\n";
+			//if (this->hp < 0) instance_destroy(this);
+		}
+
+		~Instance() {
+			std::cout << "Instance destroyed.\n";
+		}
 };
 std::vector<Instance*> InstancesList;
-std::vector<int> InstancesTypeList[2];
+
 
 /**
  * Object definitions
@@ -59,11 +77,37 @@ std::vector<int> InstancesTypeList[2];
 class Enemy : public Instance {
 	public:
 		Enemy() {}
-		Enemy(int row, int col, int moves, OBJECT_TYPE object_type = ENEMY) : Instance(row, col, moves, object_type) {}
+		Enemy(int row, int col, int moves, int hp, OBJECT_TYPE type = ENEMY) : Instance(row, col, moves, hp, type) {}
 };
 
 class Player : public Instance {
 	public:
 		Player() {}
-		Player(int row, int col, int moves, OBJECT_TYPE object_type = PLAYER) : Instance(row, col, moves, object_type) {}
+		Player(int row, int col, int moves, int hp, OBJECT_TYPE type = PLAYER) : Instance(row, col, moves, hp, type) {}
 };
+
+class Noone : public Instance {
+	public:
+		Noone() : Instance(0, 0, 0, 9999, NOONE) {}
+};
+
+/**
+ * Functions
+ */
+
+Instance* instance_create(int x, int y, int moves, int hp, OBJECT_TYPE type) {
+	Instance* inst;
+	
+	switch (type) {
+		case PLAYER: inst = new Player(x, y, moves, hp); break;
+		case ENEMY : inst = new  Enemy(x, y, moves, hp); break;
+		default: break;
+	}
+
+	InstancesList.push_back(inst);
+	return inst;
+}
+
+bool instance_exists(Instance* inst) {
+	return (inst->get_object_type() != NOONE);
+}

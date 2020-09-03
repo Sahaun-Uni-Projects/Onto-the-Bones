@@ -7,40 +7,14 @@
 #define __INIT
 #endif
 
+#include "otb_input.h"
 #include "otb_graphics.h"
 #include "otb_instances.h"
 using namespace std;
 
-int hdir, vdir;
-void input_refresh() {
-	hdir = vdir = 0;
-}
-
-void iPassiveMouse(int x, int y) {}
-void iMouseMove(int mx, int my) {}
-void iMouse(int button, int state, int mx, int my){}
-void iKeyboard(unsigned char key) {
-	input_refresh();
-	switch (key) {
-		case 'd': hdir =  1; break;
-		case 'a': hdir = -1; break;
-		case 'w': vdir =  1; break;
-		case 's': vdir = -1; break;
-		default: break;
-	}
-}
-void iSpecialKeyboard(unsigned char key) {
-	input_refresh();
-	switch (key) {
-		case GLUT_KEY_RIGHT: hdir =  1; break;
-		case GLUT_KEY_LEFT : hdir = -1; break;
-		case GLUT_KEY_UP   : vdir =  1; break;
-		case GLUT_KEY_DOWN : vdir = -1; break;
-		default: break;
-	}
-}
-
 // Program starts here
+#define INFINITY 2147483647
+
 #define WIN_W 960
 #define WIN_H 540
 #define GAME_X 30
@@ -48,37 +22,28 @@ void iSpecialKeyboard(unsigned char key) {
 #define CELL_W 48
 #define CELL_H 32
 
-#define ROWS 4
-#define COLS 10
-
-#define INFINITY 2147483647
-
-#define DEFAULT_LEVEL_LAYOUT_DELIMITER ' '
-
-//queue<OBJECT_TYPE> InputQueue;
-queue<int> InputQueue;
+#define LEVEL_LAYOUT_DELIMITER ' '
 
 // Globals
-Instance *player, *enemy, *noone;
-int EnemyMoveTimer = -1;
+Instance *player, *enemy, *enemy2, *noone;
 
+int timerStep = -1;
+
+queue<int> InputQueue;
 vector<string> layout;
 
-vector<vector<int>> Grid;
 int GridRows, GridCols;
-vector<vector<int>> HeatMap;
-
+vector<vector<int>> Grid, HeatMap;
 
 // Functions
 bool cell_in_bounds(int row, int col, int totalRows = GridRows, int totalCols = GridCols) {
 	return (((0 <= row) && (row < totalRows)) && ((0 <= col) && (col < totalCols)));
 }
-
 bool cell_is_valid(int row, int col, int totalRows = GridRows, int totalCols = GridCols) {
 	return (cell_in_bounds(row, col, totalRows, totalCols) && Grid[row][col]);
 }
 
-vector<vector<int>> world_init(vector<string> temp, char delimiter = DEFAULT_LEVEL_LAYOUT_DELIMITER) {
+vector<vector<int>> world_init(vector<string> temp, char delimiter = LEVEL_LAYOUT_DELIMITER) {
 	int rows = int(temp.size()), cols = (int(temp[0].size())>>1);
 	vector<vector<int>> grid(rows, vector<int>(cols,0));
 	
@@ -92,7 +57,6 @@ vector<vector<int>> world_init(vector<string> temp, char delimiter = DEFAULT_LEV
 	GridCols = cols;
 	return grid;
 }
-
 vector<vector<int>> generate_heatmap(Instance* instance) {
 	int rows = GridRows, cols = GridCols;
 	vector<vector<int>> map(rows, vector<int>(cols,0));
@@ -137,6 +101,20 @@ vector<vector<int>> generate_heatmap(Instance* instance) {
 	return map;
 }
 
+Instance* instance_get_at_cell(int row, int col) {
+	for (int i = 0; i < int(InstancesList.size()); ++i) {
+		Instance* inst = InstancesList[i];
+		if ((inst->get_row() == row) && (inst->get_col() == col)) return inst;
+	}
+	return noone;
+}
+int instance_get_number(Instance* inst) {
+	for (int i = 0; i < int(InstancesList.size()); ++i) {
+		if (InstancesList[i] == inst) return i;
+	}
+	return -1;
+}
+
 int coord_x(int col) {
 	return (GAME_X + col*CELL_W);
 }
@@ -147,60 +125,53 @@ int coord_y(int row) {
 void draw_rectangle_at_cell(int row, int col, int color = draw_get_color(), bool filled = true) {
 	draw_rectangle_color(coord_x(col), coord_y(row), CELL_W, CELL_H, color, filled);
 }
-
 void draw_circle_at_cell(int row, int col, int color = draw_get_color(), bool filled = true) {
 	double w = CELL_W/2., h = CELL_H/2.;
 	draw_circle_color(coord_x(col)+w, coord_y(row)+h, min(w,h), color, filled);
 }
 
-void ev_step() {}
-
-void ev_draw() {
-	draw_set_color(c_white);
-	for (int i = 0; i < GridRows; ++i) {
-		for (int j = 0; j < GridCols; ++j) {
-			if (Grid[i][j]) draw_rectangle(coord_x(j), coord_y(i), CELL_W, CELL_H);
-			//draw_rectangle(coord_x(j), coord_y(i), CELL_W, CELL_H);
-		}
-	}
-	
-	draw_rectangle_at_cell(enemy->get_row(), enemy->get_col(), c_red);
-	draw_circle_at_cell(player->get_row(), player->get_col(), c_green);
-}
-
-void iDraw() {
-	iClear();
-	ev_draw();
-}
-
-void move() {
+void ev_step() {
 	if (InputQueue.empty()) {
+		// Feed inputs
 		for (int i = 0; i < int(InstancesList.size()); ++i) {
 			Instance* inst = InstancesList[i];
-			for (int j = 0; j < inst->get_moves(); ++j) {
-				//InputQueue.push(inst->get_object_type());
-				InputQueue.push(i);
+			if (inst == noone) {
+				InstancesList.erase(InstancesList.begin()+i);
+				continue;
 			}
+			for (int j = 0; j < inst->get_moves(); ++j) InputQueue.push(i);
 		}
 	} else {
 		int curr = InputQueue.front();
+		Instance *inst = InstancesList[curr];
 		
-		if (InstancesList[curr] == noone) {
+		if (!instance_exists(inst)) {
 			// Instance is destroyed
 			InputQueue.pop();
 		} else {
 			// Instance exists
-			if (InstancesList[InputQueue.front()] == player) {
-				int r = player->get_row(), c = player->get_col();
-				if ((hdir || vdir) && cell_is_valid(r+vdir, c+hdir)) {
+			if (inst->get_object_type() == PLAYER) {
+				int r = inst->get_row()+vdir, c = inst->get_col()+hdir;
+				if ((hdir || vdir) && cell_is_valid(r,c)) {
 					// Move
-					player->move_relative(vdir, hdir);
+					Instance* other = instance_get_at_cell(r,c);
+					if (other != noone) {
+						// Enemy found
+						other->hit(1);
+						if (other->get_hp() <= 0) {
+							int pos = instance_get_number(other);
+							if (pos > -1) InstancesList[pos] = noone;
+						}
+					} else {
+						inst->set_pos(r,c);
+					}
 					
 					// Handle Inputs
 					input_refresh();
-
 					InputQueue.pop();
-					HeatMap = generate_heatmap(player);
+
+					// Heatmap
+					HeatMap = generate_heatmap(inst);
 					for (int i = 0; i < GridRows; ++i) {
 						for (int j = 0; j < GridCols; ++j) cout << HeatMap[i][j] << " ";
 						cout << endl;
@@ -208,7 +179,7 @@ void move() {
 				}
 			} else {
 				int mr = INFINITY, mc = INFINITY, dr = 0, dc = 0,
-					row = enemy->get_row(), col = enemy->get_col();
+					row = inst->get_row(), col = inst->get_col();
 
 				if (cell_in_bounds(row-1, col)) mr = min(mr, HeatMap[row-1][col]);
 				if (cell_in_bounds(row+1, col)) mr = min(mr, HeatMap[row+1][col]);
@@ -219,11 +190,11 @@ void move() {
 
 				if ((mr != INFINITY) && (mc != INFINITY)) {
 					if (mc < mr) {
-						if (cell_in_bounds(row, col-1) && (HeatMap[row][col-1] == mc)) enemy->move_relative(0, -1);
-							else if (cell_in_bounds(row, col+1) && (HeatMap[row][col+1] == mc)) enemy->move_relative(0, 1);
+						if (cell_in_bounds(row, col-1) && (HeatMap[row][col-1] == mc)) inst->move_relative(0, -1);
+							else if (cell_in_bounds(row, col+1) && (HeatMap[row][col+1] == mc)) inst->move_relative(0, 1);
 					} else {
-						if (cell_in_bounds(row-1, col) && (HeatMap[row-1][col] == mr)) enemy->move_relative(-1, 0);
-							else if (cell_in_bounds(row+1, col) && (HeatMap[row+1][col] == mr)) enemy->move_relative(1, 0);
+						if (cell_in_bounds(row-1, col) && (HeatMap[row-1][col] == mr)) inst->move_relative(-1, 0);
+							else if (cell_in_bounds(row+1, col) && (HeatMap[row+1][col] == mr)) inst->move_relative(1, 0);
 					}
 				}
 
@@ -233,17 +204,28 @@ void move() {
 	}
 }
 
+void ev_draw() {
+	draw_set_color(c_white);
+	for (int i = 0; i < GridRows; ++i) {
+		for (int j = 0; j < GridCols; ++j) {
+			if (Grid[i][j]) draw_rectangle(coord_x(j), coord_y(i), CELL_W, CELL_H);
+		}
+	}
+	
+	for (int i = 0; i < int(InstancesList.size()); ++i) {
+		Instance* inst = InstancesList[i];
+		if (!instance_exists(inst)) continue;
+		draw_rectangle_at_cell(inst->get_row(), inst->get_col(), c_red);
+	}
+}
+
+void iDraw() {
+	iClear();
+	ev_draw();
+}
+
 void init() {
 	// Initialize World
-	/*
-	layout.push_back("1.1.1.0.0.1.0.1.1.1.0");
-	layout.push_back("1.1.1.0.0.1.0.1.1.1.0");
-	layout.push_back("1.1.1.1.1.1.0.1.0.1.1");
-	layout.push_back("1.1.1.0.0.1.1.1.0.1.1");
-	layout.push_back("1.1.1.0.0.1.1.1.0.1.1");
-	layout.push_back("1.1.1.1.1.1.1.1.1.1.1");
-	*/
-
 	layout.push_back("1 1 1 0 0 1 0 1 1 1 0");
 	layout.push_back("1 1 1 0 0 1 0 1 1 1 0");
 	layout.push_back("1 1 1 1 1 1 0 1 0 1 1");
@@ -258,11 +240,10 @@ void init() {
 	input_refresh();
 	
 	// Initialize Instances
-	player = new Player(2, 0, 2);
-	enemy  = new Enemy(3, 9, 1);
-
-	InstancesList.push_back(player);
-	InstancesList.push_back(enemy);
+	noone  = new Noone();
+	player = instance_create(2, 0, 2, 5, PLAYER);
+	enemy  = instance_create(3, 9, 1, 3, ENEMY);
+	enemy2 = instance_create(2, 2, 2, 2, ENEMY);
 }
 
 int main() {
@@ -271,7 +252,7 @@ int main() {
 	init();
 
 	// Timers
-	EnemyMoveTimer = iSetTimer(100, move);
+	timerStep = iSetTimer(100, ev_step);
 
 	// Start
 	iStart();
