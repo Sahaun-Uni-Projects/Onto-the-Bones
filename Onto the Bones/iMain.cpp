@@ -234,7 +234,9 @@ void ev_draw() {
 	}
 	
 	// Draw instances
-	for (int i = 0; i < int(InstancesList.size()); ++i) draw_instance(InstancesList[i]);
+	for (int i = 0; i < int(InstancesList.size()); ++i) {
+		draw_instance(InstancesList[i]);
+	}
 }
 
 void iDraw() {

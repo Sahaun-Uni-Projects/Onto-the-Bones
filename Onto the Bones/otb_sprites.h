@@ -33,4 +33,5 @@ void sprites_init() {
 
 void draw_sprite(int x, int y, Sprite* spr) {
 	iShowImage(x, y, spr->get_width(), spr->get_height(), spr->get_tex());
+	//iShowImage(x+spr->get_width(), y, -spr->get_width(), spr->get_height(), spr->get_tex());
 }
