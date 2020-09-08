@@ -14,13 +14,22 @@ enum OBJECT_TYPE {
 };
 
 class Instance {
-	int row, col, moves, hp;
+	int x, y;
+	Sprite* sprite;
+
+	public:
+		Instance() {}
+		Instance(int x, int y, Sprite* sprite) : x(x), y(y), sprite(sprite) {}
+};
+
+class GameInstance : Instance {
+	int row, col, moves, hp, face;
 	Sprite* sprite;
 	OBJECT_TYPE type;
 
 	public:
-		Instance() {}
-		Instance(int row, int col, int moves, int hp, Sprite* sprite, OBJECT_TYPE type) : row(row), col(col), moves(moves), hp(hp), sprite(sprite), type(type) {}
+		GameInstance() {}
+		GameInstance(int row, int col, int moves, int hp, int face, Sprite* sprite, OBJECT_TYPE type) : row(row), col(col), moves(moves), hp(hp), face(face), sprite(sprite), type(type) {}
 		
 		int get_row() {
 			return this->row;
@@ -36,6 +45,10 @@ class Instance {
 
 		int get_hp() {
 			return this->hp;
+		}
+
+		int get_face() {
+			return this->face;
 		}
 
 		Sprite* get_sprite() {
@@ -62,45 +75,52 @@ class Instance {
 			return true;
 		}
 
+		void set_face(int face) {
+			this->face = face;
+		}
+
+		void flip() {
+			this->face = -this->face;
+		}
+
 		void hit(int damage) {
 			this->hp -= damage;
-			std::cout << hp << " Instance hit.\n";
+			std::cout << hp << " GameInstance hit.\n";
 		}
 
-		~Instance() {
-			std::cout << "Instance destroyed.\n";
+		~GameInstance() {
+			std::cout << "GameInstance destroyed.\n";
 		}
 };
-std::vector<Instance*> InstancesList;
-
+std::vector<GameInstance*> InstancesList;
 
 /**
  * Object definitions
  */
 
-class Enemy : public Instance {
+class Enemy : public GameInstance {
 	public:
 		Enemy() {}
-		Enemy(int row, int col, int moves, int hp, Sprite* sprite, OBJECT_TYPE type = ENEMY) : Instance(row, col, moves, hp, sprite, type) {}
+		Enemy(int row, int col, int moves, int hp, Sprite* sprite, OBJECT_TYPE type = ENEMY) : GameInstance(row, col, moves, hp, -1, sprite, type) {}
 };
 
-class Player : public Instance {
+class Player : public GameInstance {
 	public:
 		Player() {}
-		Player(int row, int col, int moves, int hp, Sprite* sprite, OBJECT_TYPE type = PLAYER) : Instance(row, col, moves, hp, sprite, type) {}
+		Player(int row, int col, int moves, int hp, Sprite* sprite, OBJECT_TYPE type = PLAYER) : GameInstance(row, col, moves, hp, 1, sprite, type) {}
 };
 
-class Noone : public Instance {
+class Noone : public GameInstance {
 	public:
-		Noone() : Instance(0, 0, 9999, 9999, sNoone, NOONE) {}
+		Noone() : GameInstance(0, 0, 9999, 9999, 1, sNoone, NOONE) {}
 };
 
 /**
  * Functions
  */
 
-Instance* instance_create(int x, int y, int moves, int hp, Sprite* sprite, OBJECT_TYPE type) {
-	Instance* inst;
+GameInstance* instance_create(int x, int y, int moves, int hp, Sprite* sprite, OBJECT_TYPE type) {
+	GameInstance* inst;
 	
 	switch (type) {
 		case PLAYER: inst = new Player(x, y, moves, hp, sprite); break;
@@ -112,6 +132,6 @@ Instance* instance_create(int x, int y, int moves, int hp, Sprite* sprite, OBJEC
 	return inst;
 }
 
-bool instance_exists(Instance* inst) {
+bool instance_exists(GameInstance* inst) {
 	return (inst->get_object_type() != NOONE);
 }

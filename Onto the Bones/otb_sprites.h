@@ -24,14 +24,24 @@ class Sprite {
 		}
 };
 
-Sprite *sNoone, *sPlayer, *sEnemy;
+Sprite *sNoone, *sPlayer, *sEnemy, *sGround, *sGroundHighlighted;
+Sprite *bgSky;
 void sprites_init() {
 	sNoone  = new Sprite(16, 16, ("Sprites/Blank.png"));
 	sPlayer = new Sprite(32, 32, ("Sprites/Player.png"));
 	sEnemy  = new Sprite(32, 32, ("Sprites/Enemy.png"));
+
+	sGround = new Sprite(48, 96, ("Sprites/sGround.png"));
+	sGroundHighlighted = new Sprite(48, 96, ("Sprites/sGroundHighlighted.png"));
+
+	bgSky = new Sprite(1350, 540, ("Sprites/bgSky.png"));
+}
+
+void draw_sprite_ext(int x, int y, Sprite* spr, int xscale, int yscale) {
+	if (xscale == 1) iShowImage(x, y, spr->get_width(), spr->get_height(), spr->get_tex());
+		else iShowImage(x+spr->get_width(), y, -spr->get_width(), spr->get_height(), spr->get_tex());
 }
 
 void draw_sprite(int x, int y, Sprite* spr) {
-	iShowImage(x, y, spr->get_width(), spr->get_height(), spr->get_tex());
-	//iShowImage(x+spr->get_width(), y, -spr->get_width(), spr->get_height(), spr->get_tex());
+	draw_sprite_ext(x, y, spr, 1, 1);
 }
