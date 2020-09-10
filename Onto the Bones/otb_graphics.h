@@ -13,17 +13,14 @@
 #define c_green 0x00FF00
 #define c_blue  0x0000FF
 
-/**
- * System
- */
+// ------------------- System
 namespace Sys {
 	int currentColor = c_white;
 	int circleSmoothness = 75;
 };
-	
-/**
- * Color
- */
+
+
+// ------------------- Color
 int draw_get_color() {
 	return Sys::currentColor;
 }
@@ -50,10 +47,8 @@ void draw_set_color(int red, int green, int blue) {
 	draw_set_color(rgb_to_hex(red, green, blue));
 }
 
-	
-/**
- * Drawing
- */
+
+// ------------------- Drawing
 void draw_rectangle_color(double left, double bottom, double dx, double dy, int color, bool filled = false) {
 	int col = draw_get_color();
 	draw_set_color(color);

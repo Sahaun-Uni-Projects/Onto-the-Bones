@@ -28,7 +28,7 @@ Sprite *sNoone, *sPlayer, *sEnemy;
 Sprite *sGround, *sGroundAlert, *sGroundHighlighted;
 Sprite *bgSky;
 void sprites_init() {
-	sNoone  = new Sprite(16, 16, ("Sprites/Blank.png"));
+	sNoone  = new Sprite(16, 16, ("Sprites/sNoone.png"));
 	sPlayer = new Sprite(32, 32, ("Sprites/Player.png"));
 	sEnemy  = new Sprite(32, 32, ("Sprites/Enemy.png"));
 

@@ -64,6 +64,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="bitmap_loader.h" />
+    <ClInclude Include="otb_rooms.h" />
     <ClInclude Include="otb_utils.h" />
     <ClInclude Include="glaux.h" />
     <ClInclude Include="glut.h" />
