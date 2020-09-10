@@ -17,7 +17,7 @@
 
 using namespace std;
 
-// Program starts here
+// ------------------- Program starts here
 #define INFINITY 2147483647
 
 #define WIN_WIDTH  960
@@ -31,31 +31,31 @@ using namespace std;
 
 #define LEVEL_LAYOUT_DELIMITER ' '
 
-// Globals
-GameInstance *player, *noone;
+// ------------------- Globals
 
+// Timers
 int Timer1, Timer100, Timer500;
 
+// Background
 int skyX[2];
 int skySpeed;
 
-queue<int> InputQueue;
-vector<string> layout;
-
+// World
 int GridRows, GridCols;
 vector<vector<int>> Grid, HeatMap;
+vector<string> layout;
 
+// Game
 int GamePos[2], GameBasePos[2], GameLenRange[2];
 int GameTimer, GameDir, GameLen;
 
-// Functions
-bool cell_in_bounds(int row, int col, int totalRows = GridRows, int totalCols = GridCols) {
-	return (((0 <= row) && (row < totalRows)) && ((0 <= col) && (col < totalCols)));
-}
-bool cell_is_valid(int row, int col, int totalRows = GridRows, int totalCols = GridCols) {
-	return (cell_in_bounds(row, col, totalRows, totalCols) && Grid[row][col]);
-}
+// Instances
+GameInstance *player, *noone;
+queue<int> InputQueue;
 
+// ------------------- Functions
+
+// World
 vector<vector<int>> world_init(vector<string> temp, char delimiter = LEVEL_LAYOUT_DELIMITER) {
 	int rows = int(temp.size()), cols = (int(temp[0].size())>>1);
 	vector<vector<int>> grid(rows, vector<int>(cols,0));
@@ -114,6 +114,21 @@ vector<vector<int>> generate_heatmap(GameInstance* instance) {
 	return map;
 }
 
+// Cells
+bool cell_in_bounds(int row, int col, int totalRows = GridRows, int totalCols = GridCols) {
+	return (((0 <= row) && (row < totalRows)) && ((0 <= col) && (col < totalCols)));
+}
+bool cell_is_valid(int row, int col, int totalRows = GridRows, int totalCols = GridCols) {
+	return (cell_in_bounds(row, col, totalRows, totalCols) && Grid[row][col]);
+}
+int coord_x(int col) {
+	return (GamePos[0] + col*CELL_WIDTH);
+}
+int coord_y(int row) {
+	return (GamePos[1] + row*CELL_HEIGHT);
+}
+
+// Instance
 GameInstance* instance_get_at_cell(int row, int col) {
 	for (int i = 0; i < int(InstancesList.size()); ++i) {
 		GameInstance* inst = InstancesList[i];
@@ -127,14 +142,16 @@ int instance_get_number(GameInstance* inst) {
 	}
 	return -1;
 }
-
-int coord_x(int col) {
-	return (GamePos[0] + col*CELL_WIDTH);
+void hit_instance(GameInstance *inst, int damage) {
+	if (!instance_exists(inst)) return;
+	inst->hit(damage);
+	if (inst->get_hp() <= 0) {
+		int pos = instance_get_number(inst);
+		if (pos > -1) InstancesList[pos] = noone;
+	}
 }
-int coord_y(int row) {
-	return (GamePos[1] + row*CELL_HEIGHT);
-}
 
+// Drawing
 void draw_rectangle_at_cell(int row, int col, int color = draw_get_color(), bool filled = true) {
 	draw_rectangle_color(coord_x(col), coord_y(row), CELL_WIDTH, CELL_HEIGHT, color, filled);
 }
@@ -153,15 +170,7 @@ void draw_instance(GameInstance *inst) {
 	draw_sprite_at_cell(inst->get_row(), inst->get_col(), inst->get_sprite(), inst->get_face());
 }
 
-void hit_instance(GameInstance *inst, int damage) {
-	if (!instance_exists(inst)) return;
-	inst->hit(damage);
-	if (inst->get_hp() <= 0) {
-		int pos = instance_get_number(inst);
-		if (pos > -1) InstancesList[pos] = noone;
-	}
-}
-
+// Events
 void ev_step() {
 	// Handle movement
 	if (InputQueue.empty()) {
@@ -240,7 +249,6 @@ void ev_step() {
 		}
 	}
 }
-
 void ev_draw() {
 	// Sky
 	for (int i = 0; i < 2; ++i) {
@@ -248,22 +256,29 @@ void ev_draw() {
 	}
 
 	// World
-	bool highlight;
 	for (int i = GridRows-1; i >= 0; --i) {
 		for (int j = 0; j < GridCols; ++j) {
 			if (!Grid[i][j]) continue;
 			
-			highlight = false;
+			Sprite* spr = sGround;
 
 			if (!InputQueue.empty()) {
-				GameInstance* inst = InstancesList[InputQueue.front()];
-				if (instance_exists(inst)) {
-					if ((abs(i-inst->get_row()) + abs(j-inst->get_col())) <= 1) highlight = true; 
+				GameInstance* instActive = InstancesList[InputQueue.front()];
+				GameInstance* inst = instance_get_at_cell(i,j);
+				if (instance_exists(instActive)) {
+					if ((abs(i-instActive->get_row()) + abs(j-instActive->get_col())) <= 1) {
+						spr = sGroundHighlighted;
+						if (instance_exists(inst)) {
+							if (((instActive->get_object_type() == PLAYER) && (inst->get_object_type() == ENEMY)) ||
+								((instActive->get_object_type() == ENEMY) && (inst->get_object_type() == PLAYER))) {
+									spr = sGroundAlert;
+							}
+						}
+					}
 				}
 			}
-			
-			draw_sprite(coord_x(j), coord_y(i)-64, highlight ? sGroundHighlighted : sGround);
-				
+
+			draw_sprite(coord_x(j), coord_y(i)-64, spr);
 			//draw_set_color(c_white);
 			//draw_rectangle(coord_x(j), coord_y(i), CELL_WIDTH, CELL_HEIGHT);
 		}
@@ -275,11 +290,35 @@ void ev_draw() {
 	}
 }
 
+// Timers
+void timer_step1() {
+	// Game
+	++GameTimer;
+
+	// Move sky
+	for (int i = 0; i < 2; ++i) {
+		int sw = bgSky->get_width();
+		if ((skyX[i] -= skySpeed) <= -sw) skyX[i] = sw;
+	}
+}
+void timer_step100() {
+	ev_step();
+}
+void timer_step500() {
+	// Move game world
+	GamePos[1] += GameDir;
+	if (!--GameLen) {
+		GameDir *= -1;
+		GameLen = irandom_range(GameLenRange[0], GameLenRange[1]);
+	}
+	if (abs(GamePos[1]-GameBasePos[1]) >= 20) GameDir *= -1;
+}
+
+// iGraphics
 void iDraw() {
 	iClear();
 	ev_draw();
 }
-
 void init() {
 	// Load sprites
 	sprites_init();
@@ -320,31 +359,6 @@ void init() {
 	player = instance_create(2, 0, 2, 5, sPlayer, PLAYER);
 	instance_create(3, 9, 1, 3, sEnemy,  ENEMY);
 	instance_create(2, 2, 2, 2, sEnemy,  ENEMY);
-}
-
-void timer_step1() {
-	// Game
-	++GameTimer;
-
-	// Move sky
-	for (int i = 0; i < 2; ++i) {
-		int sw = bgSky->get_width();
-		if ((skyX[i] -= skySpeed) <= -sw) skyX[i] = sw;
-	}
-}
-
-void timer_step100() {
-	ev_step();
-}
-
-void timer_step500() {
-	// Move game world
-	GamePos[1] += GameDir;
-	if (!--GameLen) {
-		GameDir *= -1;
-		GameLen = irandom_range(GameLenRange[0], GameLenRange[1]);
-	}
-	if (abs(GamePos[1]-GameBasePos[1]) >= 20) GameDir *= -1;
 }
 
 int main() {

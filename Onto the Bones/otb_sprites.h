@@ -24,7 +24,8 @@ class Sprite {
 		}
 };
 
-Sprite *sNoone, *sPlayer, *sEnemy, *sGround, *sGroundHighlighted;
+Sprite *sNoone, *sPlayer, *sEnemy;
+Sprite *sGround, *sGroundAlert, *sGroundHighlighted;
 Sprite *bgSky;
 void sprites_init() {
 	sNoone  = new Sprite(16, 16, ("Sprites/Blank.png"));
@@ -32,6 +33,7 @@ void sprites_init() {
 	sEnemy  = new Sprite(32, 32, ("Sprites/Enemy.png"));
 
 	sGround = new Sprite(48, 96, ("Sprites/sGround.png"));
+	sGroundAlert = new Sprite(48, 96, ("Sprites/sGroundAlert.png"));
 	sGroundHighlighted = new Sprite(48, 96, ("Sprites/sGroundHighlighted.png"));
 
 	bgSky = new Sprite(1350, 540, ("Sprites/bgSky.png"));
