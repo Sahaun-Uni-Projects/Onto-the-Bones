@@ -24,19 +24,23 @@ class Sprite {
 		}
 };
 
-Sprite *sNoone, *sPlayer, *sEnemy;
+Sprite *sNoone;
+Sprite *sPlayer, *sEnemy;
+Sprite *sBone;
 Sprite *sGround, *sGroundAlert, *sGroundHighlighted;
 Sprite *bgSky;
 void sprites_init() {
-	sNoone  = new Sprite(16, 16, ("Sprites/sNoone.png"));
-	sPlayer = new Sprite(32, 32, ("Sprites/Player.png"));
-	sEnemy  = new Sprite(32, 32, ("Sprites/Enemy.png"));
+	sNoone  = new Sprite(16, 16, "Sprites/sNoone.png");
+	sPlayer = new Sprite(32, 32, "Sprites/Player.png");
+	sEnemy  = new Sprite(32, 32, "Sprites/Enemy.png");
 
-	sGround = new Sprite(48, 96, ("Sprites/sGround.png"));
-	sGroundAlert = new Sprite(48, 96, ("Sprites/sGroundAlert.png"));
-	sGroundHighlighted = new Sprite(48, 96, ("Sprites/sGroundHighlighted.png"));
+	sBone = new Sprite(24, 24, "Sprites/sBone.png");
 
-	bgSky = new Sprite(1350, 540, ("Sprites/bgSky.png"));
+	sGround = new Sprite(48, 96, "Sprites/sGround.png");
+	sGroundAlert = new Sprite(48, 96, "Sprites/sGroundAlert.png");
+	sGroundHighlighted = new Sprite(48, 96, "Sprites/sGroundHighlighted.png");
+
+	bgSky = new Sprite(1350, 540, "Sprites/bgSky.png");
 }
 
 void draw_sprite_ext(int x, int y, Sprite* spr, int xscale, int yscale) {

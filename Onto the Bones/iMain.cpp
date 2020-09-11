@@ -35,6 +35,7 @@
 #include "otb_input.h"
 #include "otb_instances.h"
 #include "otb_rooms.h"
+#include "otb_levels.h"
 
 using namespace std;
 #pragma endregion
@@ -50,12 +51,13 @@ int skySpeed;
 // World
 int GridRows, GridCols;
 vector<vector<int>> Grid, HeatMap;
-vector<string> layout;
 
 // Game
 int GamePos[2], GameBasePos[2], GameLenRange[2];
 int GameTimer, GameDir, GameLen;
 vector<int> GameTimers;
+int Goal[2];
+int Level;
 
 // Instances
 GameInstance *player, *noone;
@@ -81,13 +83,28 @@ int coord_y(int row) {
 #pragma endregion
 
 #pragma region World
-vector<vector<int>> world_init(vector<string> temp, char delimiter = LEVEL_LAYOUT_DELIMITER) {
-	int rows = int(temp.size()), cols = (int(temp[0].size())>>1);
+vector<vector<int>> world_init(vector<string>& temp, char delimiter = LEVEL_LAYOUT_DELIMITER) {
+	int rows = int(temp.size()), cols = (int(temp[0].size())>>1)+1;
 	vector<vector<int>> grid(rows, vector<int>(cols,0));
 	
 	for (int i = 0; i < rows; ++i) {
 		for (int j = 0; j < (cols<<1); j += 2) {
-			grid[i][j>>1] = int(temp[i][j]-'0');
+			int r = i, c = (j>>1);
+
+			// Put a ground tile
+			grid[r][c] = 1;
+
+			// Put a character or tile
+			switch (temp[i][j]) {
+				case 'P': player = instance_create(r, c, 2, 5, sPlayer, PLAYER); break;
+				case 'G': Goal[0] = r; Goal[1] = c; break;
+				
+				case 'a': instance_create(r, c, 3, 1, sEnemy, ENEMY); break;
+				case 'b': instance_create(r, c, 2, 2, sEnemy, ENEMY); break;
+				case 'c': instance_create(r, c, 1, 3, sEnemy, ENEMY); break;
+
+				default: grid[r][c] = int(temp[i][j]-'0'); break;
+			}
 		}
 	}
 	
@@ -187,6 +204,14 @@ void draw_instance(GameInstance *inst) {
 #pragma endregion
 
 #pragma region Timers
+void pause_game_timers() {
+	for (int i = 0; i < int(GameTimers.size()); ++i) iPauseTimer(GameTimers[i]);
+}
+
+void resume_game_timers() {
+	for (int i = 0; i < int(GameTimers.size()); ++i) iResumeTimer(GameTimers[i]);
+}
+
 void timer_step1() {
 	// Game
 	++GameTimer;
@@ -219,7 +244,6 @@ void timers_init() {
 	Timer100 = iSetTimer(100, timer_step100);
 	Timer500 = iSetTimer(500, timer_step500);
 	
-	GameTimers.push_back(Timer1);
 	GameTimers.push_back(Timer500);
 }
 
@@ -230,8 +254,7 @@ void rooms_init() {
 		function<void(void)>([](void) {
 			
 			// Pause timer
-			iResumeTimer(Timer1);
-			iResumeTimer(Timer500);
+			pause_game_timers();
 		}),
 		// Step
 		function<void(void)>([](void) {
@@ -248,16 +271,17 @@ void rooms_init() {
 	rGame = new Room("Game",
 		// Create
 		function<void(void)>([](void) {
-			// Initialize World
-			layout.push_back("1 1 1 0 0 1 0 1 1 1 0");
-			layout.push_back("1 1 1 0 0 1 0 1 1 1 0");
-			layout.push_back("1 1 1 1 1 1 0 1 0 1 1");
-			layout.push_back("1 1 1 0 0 1 1 1 0 1 1");
-			layout.push_back("1 1 1 0 0 1 1 1 0 1 1");
-			layout.push_back("1 1 1 1 1 1 1 1 1 1 1");
+			// Clear Instances
+			InstancesList.clear();
 
-			Grid = world_init(layout);
+			// Initialize Input
+			while (!InputQueue.empty()) InputQueue.pop();
+			input_refresh();
+
+			// Initialize World
+			Grid = world_init(get_level_layout(Level));
 			HeatMap = vector<vector<int>>(GridRows, vector<int>(GridCols, 0));
+			HeatMap = generate_heatmap(player);
 	
 			// Game
 			GameBasePos[0] = (WIN_WIDTH-GridCols*CELL_WIDTH)/2;
@@ -270,24 +294,11 @@ void rooms_init() {
 			GameDir = irandom(1)*2-1;
 			GameLen = irandom_range(GameLenRange[0], GameLenRange[1]);
 
-			// Initialize Input
-			input_refresh();
-
-			// Sky
-			skyX[0] = 0;
-			skyX[1] = bgSky->get_width();
-			skySpeed = 1;
-	
 			// Initialize Instances
 			noone  = new Noone();
 
-			player = instance_create(2, 0, 2, 5, sPlayer, PLAYER);
-			instance_create(3, 9, 1, 3, sEnemy,  ENEMY);
-			instance_create(2, 2, 2, 2, sEnemy,  ENEMY);
-
 			// Start timer
-			iResumeTimer(Timer1);
-			iResumeTimer(Timer500);
+			resume_game_timers();
 		}),
 		// Step
 		function<void(void)>([](void) {
@@ -312,25 +323,40 @@ void rooms_init() {
 				} else {
 					// Instance exists
 					if (inst->get_object_type() == PLAYER) {
-						int r = inst->get_row()+vdir, c = inst->get_col()+hdir;
-						if ((hdir || vdir) && cell_is_valid(r,c)) {
-							// Move
-							GameInstance* other = instance_get_at_cell(r,c);
-							if (other != noone) hit_instance(other, 1);
-								else inst->set_pos(r,c);
-					
-							// Direction
-							if (hdir) inst->set_face(hdir);
-
-							// Handle Inputs
+						if (skip) {
+							// Skipped de turn
 							input_refresh();
-							InputQueue.pop();
+							while (!InputQueue.empty()) {
+								if (InputQueue.front() != curr) break;
+								InputQueue.pop();
+							}
+						} else {
+							int r = inst->get_row()+vdir, c = inst->get_col()+hdir;
+							if ((hdir || vdir) && cell_is_valid(r,c)) {
+								// Move
+								GameInstance* other = instance_get_at_cell(r,c);
+								if (other != noone) hit_instance(other, 1);
+									else inst->set_pos(r,c);
+					
+								// Direction
+								if (hdir) inst->set_face(hdir);
 
-							// Heatmap
-							HeatMap = generate_heatmap(inst);
-							for (int i = 0; i < GridRows; ++i) {
-								for (int j = 0; j < GridCols; ++j) cout << HeatMap[i][j] << " ";
-								cout << endl;
+								// Handle Inputs
+								input_refresh();
+								InputQueue.pop();
+
+								// Heatmap
+								HeatMap = generate_heatmap(inst);
+								for (int i = 0; i < GridRows; ++i) {
+									for (int j = 0; j < GridCols; ++j) cout << HeatMap[i][j] << " ";
+									cout << endl;
+								}
+
+								// Check winning condition
+								if ((r == Goal[0]) && (c == Goal[1])) {
+									++Level;
+									room_goto(rGame);
+								}
 							}
 						}
 					} else {
@@ -394,6 +420,8 @@ void rooms_init() {
 					}
 
 					draw_sprite(coord_x(j), coord_y(i)-64, spr);
+					if ((Goal[0] == i) && (Goal[1] == j)) draw_sprite_at_cell(i, j, sBone, 1);
+
 					//draw_set_color(c_white);
 					//draw_rectangle(coord_x(j), coord_y(i), CELL_WIDTH, CELL_HEIGHT);
 				}
@@ -415,11 +443,16 @@ void game_init() {
 	// Load timers
 	timers_init();
 
+	// Background
+	skyX[0] = 0;
+	skyX[1] = bgSky->get_width();
+	skySpeed = 1;
+
 	// Load rooms
+	Level = 1;
 	rooms_init();
 	room_goto(rGame);
 }
-
 
 // ------------------- iGraphics
 
