@@ -1,6 +1,15 @@
-Buch (https://opengameart.org/users/buch)
+Buch
 -- Asset: https://opengameart.org/content/the-field-of-the-floating-islands
+-- License: https://creativecommons.org/publicdomain/zero/1.0
 
 Paulina Riva
 -- Asset: https://opengameart.org/content/sky-background
--- License: https://creativecommons.org/licenses/by/3.0/
+-- License: https://creativecommons.org/licenses/by/3.0
+
+bart
+-- Asset: https://opengameart.org/content/pixel-art-femur
+-- License: https://creativecommons.org/publicdomain/zero/1.0
+
+C.Nilsson
+-- Asset: https://opengameart.org/content/simple-small-pixel-hearts
+-- License: https://creativecommons.org/licenses/by-sa/3.0

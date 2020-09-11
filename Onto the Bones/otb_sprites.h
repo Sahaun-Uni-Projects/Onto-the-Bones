@@ -27,6 +27,7 @@ class Sprite {
 Sprite *sNoone;
 Sprite *sPlayer, *sEnemy;
 Sprite *sBone;
+Sprite *sHeartFull, *sHeartEmpty;
 Sprite *sGround, *sGroundAlert, *sGroundHighlighted;
 Sprite *bgSky;
 void sprites_init() {
@@ -35,6 +36,8 @@ void sprites_init() {
 	sEnemy  = new Sprite(32, 32, "Sprites/Enemy.png");
 
 	sBone = new Sprite(24, 24, "Sprites/sBone.png");
+	sHeartFull = new Sprite(16, 16, "Sprites/sHeartFull.png");
+	sHeartEmpty = new Sprite(16, 16, "Sprites/sHeartEmpty.png");
 
 	sGround = new Sprite(48, 96, "Sprites/sGround.png");
 	sGroundAlert = new Sprite(48, 96, "Sprites/sGroundAlert.png");

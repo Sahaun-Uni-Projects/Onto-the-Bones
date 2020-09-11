@@ -49,6 +49,7 @@ void draw_set_color(int red, int green, int blue) {
 
 
 // ------------------- Drawing
+#pragma region Shapes
 void draw_rectangle_color(double left, double bottom, double dx, double dy, int color, bool filled = false) {
 	int col = draw_get_color();
 	draw_set_color(color);
@@ -58,6 +59,7 @@ void draw_rectangle_color(double left, double bottom, double dx, double dy, int 
 		else iPolygon(xpos, ypos, 4);
 	draw_set_color(col);
 }
+
 void draw_rectangle(double left, double bottom, double dx, double dy, bool filled = false) {
 	draw_rectangle_color(left, bottom, dx, dy, draw_get_color(), filled);
 }
@@ -69,6 +71,21 @@ void draw_circle_color(double x, double y, double radius, int color, bool filled
 		else iCircle(x, y, radius, smoothness);
 	draw_set_color(col);
 }
+
 void draw_circle(double x, double y, double radius, bool filled = false, int smoothness = Sys::circleSmoothness) {
 		draw_circle_color(x, y, radius, draw_get_color(), filled, smoothness);
 }
+#pragma endregion
+
+#pragma region Text
+void draw_text_color(double x, double y, char* text, int color) {
+	int col = draw_get_color();
+	draw_set_color(color);
+	iText(x, y, text);
+	draw_set_color(col);
+}
+
+void draw_text(double x, double y, char* text) {
+	draw_text_color(x, y, text, Sys::circleSmoothness);
+}
+#pragma endregion

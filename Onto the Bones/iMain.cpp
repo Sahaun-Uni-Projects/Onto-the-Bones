@@ -19,13 +19,13 @@
 #define WIN_TITLE  "Onto the Bones"
 
 #define GAME_STEP_TIMER 100
+#define PLAYER_MAX_HP 5
 
 #define CELL_WIDTH 48
 #define CELL_HEIGHT 32
 
 #define LEVEL_LAYOUT_DELIMITER ' '
 
-#define FUNC function<void(void)>
 #pragma endregion
 
 #pragma region Dependencies
@@ -56,8 +56,12 @@ vector<vector<int>> Grid, HeatMap;
 int GamePos[2], GameBasePos[2], GameLenRange[2];
 int GameTimer, GameDir, GameLen;
 vector<int> GameTimers;
-int Goal[2];
+int BonePos[2], BoneScale;
 int Level;
+
+// Menu
+vector<pair<string, function<void(void)>>> options;
+int optionSelected, optionsCount;
 
 // Instances
 GameInstance *player, *noone;
@@ -96,8 +100,8 @@ vector<vector<int>> world_init(vector<string>& temp, char delimiter = LEVEL_LAYO
 
 			// Put a character or tile
 			switch (temp[i][j]) {
-				case 'P': player = instance_create(r, c, 2, 5, sPlayer, PLAYER); break;
-				case 'G': Goal[0] = r; Goal[1] = c; break;
+				case 'P': player = instance_create(r, c, 2, PLAYER_MAX_HP, sPlayer, PLAYER); break;
+				case 'G': BonePos[0] = r; BonePos[1] = c; break;
 				
 				case 'a': instance_create(r, c, 3, 1, sEnemy, ENEMY); break;
 				case 'b': instance_create(r, c, 2, 2, sEnemy, ENEMY); break;
@@ -252,17 +256,51 @@ void rooms_init() {
 	rMenu = new Room("Menu",
 		// Create
 		function<void(void)>([](void) {
+			// Menu Init
+			optionSelected = 0;
+			
+			options.push_back(make_pair("Play", function<void(void)>([](void){
+					Level = 1;
+					room_goto(rGame);
+				})
+			));
+			options.push_back(make_pair("Play", function<void(void)>([](void){
+					Level = 1;
+					room_goto(rGame);
+				})
+			));
+
+			optionsCount = options.size();
 			
 			// Pause timer
 			pause_game_timers();
 		}),
 		// Step
 		function<void(void)>([](void) {
-			
+			// Handle input
+			if (abs(vdir)) {
+				optionSelected += vdir;
+				input_refresh();
+
+				if (optionSelected < 0) optionSelected = optionsCount-1;
+					else if (optionSelected >= optionsCount) optionSelected = 0;
+			}
+
+			if (interact) {
+				(options[optionSelected].second)();
+				input_refresh();
+			}
 		}),
 		// Draw
 		function<void(void)>([](void) {
-			
+			// Text
+			int tx = WIN_WIDTH/2, ty = WIN_HEIGHT/2;
+
+			for (int i = 0; i < optionsCount; ++i) {
+				if (i == optionSelected) draw_text_color(tx-20, ty, ">", c_black);
+				draw_text_color(tx, ty, &options[i].first[0], c_black);
+				ty -= 20;
+			}
 		})
 	);
 	#pragma endregion
@@ -285,7 +323,7 @@ void rooms_init() {
 	
 			// Game
 			GameBasePos[0] = (WIN_WIDTH-GridCols*CELL_WIDTH)/2;
-			GameBasePos[1] = (WIN_HEIGHT-GridRows*CELL_HEIGHT)/2-20;
+			GameBasePos[1] = (WIN_HEIGHT-GridRows*CELL_HEIGHT)/2+10;
 			GamePos[0] = GameBasePos[0];
 			GamePos[1] = GameBasePos[1];
 			GameLenRange[0] = 3;
@@ -296,6 +334,18 @@ void rooms_init() {
 
 			// Initialize Instances
 			noone  = new Noone();
+			BoneScale = irandom(1)*2-1;
+
+			// Put player on top of instance list/ input queue
+			reverse(InstancesList.begin(), InstancesList.end());
+			for (int i = 0; i < int(InstancesList.size()); ++i) {
+				if (InstancesList[i]->get_object_type() == PLAYER) {
+					GameInstance* inst = InstancesList[i];
+					InstancesList.push_back(inst);
+					InstancesList.erase(InstancesList.begin()+i);
+				}
+			}
+			reverse(InstancesList.begin(), InstancesList.end());
 
 			// Start timer
 			resume_game_timers();
@@ -347,13 +397,13 @@ void rooms_init() {
 
 								// Heatmap
 								HeatMap = generate_heatmap(inst);
-								for (int i = 0; i < GridRows; ++i) {
+								/*for (int i = 0; i < GridRows; ++i) {
 									for (int j = 0; j < GridCols; ++j) cout << HeatMap[i][j] << " ";
 									cout << endl;
-								}
+								}*/
 
 								// Check winning condition
-								if ((r == Goal[0]) && (c == Goal[1])) {
+								if ((r == BonePos[0]) && (c == BonePos[1])) {
 									++Level;
 									room_goto(rGame);
 								}
@@ -419,11 +469,13 @@ void rooms_init() {
 						}
 					}
 
+					// Ground
 					draw_sprite(coord_x(j), coord_y(i)-64, spr);
-					if ((Goal[0] == i) && (Goal[1] == j)) draw_sprite_at_cell(i, j, sBone, 1);
-
 					//draw_set_color(c_white);
 					//draw_rectangle(coord_x(j), coord_y(i), CELL_WIDTH, CELL_HEIGHT);
+
+					// Bone
+					if ((BonePos[0] == i) && (BonePos[1] == j)) draw_sprite_at_cell(i, j, sBone, BoneScale);
 				}
 			}
 	
@@ -431,6 +483,29 @@ void rooms_init() {
 			for (int i = 0; i < int(InstancesList.size()); ++i) {
 				draw_instance(InstancesList[i]);
 			}
+
+			// Lives
+			if (instance_exists(player)) {
+				int hx = 20, hy = 504;
+				for (int i = 0; i < PLAYER_MAX_HP; ++i) {
+					draw_sprite(hx, hy, (i < player->get_hp()) ? sHeartFull : sHeartEmpty);
+					hx += 25;
+				}
+			}
+		})
+	);
+	#pragma endregion
+	
+	#pragma region rGameOver
+	rGameOver = new Room("Game Over",
+		// Create
+		function<void(void)>([](void) {
+		}),
+		// Step
+		function<void(void)>([](void) {
+		}),
+		// Draw
+		function<void(void)>([](void) {
 		})
 	);
 	#pragma endregion
@@ -451,7 +526,7 @@ void game_init() {
 	// Load rooms
 	Level = 1;
 	rooms_init();
-	room_goto(rGame);
+	room_goto(rMenu);
 }
 
 // ------------------- iGraphics

@@ -7,11 +7,12 @@
 #define __INIT
 #endif
 
-int hdir, vdir, skip;
+int hdir, vdir, skip, interact;
 void input_refresh() {
 	hdir = 0;
 	vdir = 0;
 	skip = 0;
+	interact = 0;
 }
 
 void iPassiveMouse(int x, int y) {}
@@ -24,8 +25,9 @@ void iKeyboard(unsigned char key) {
 		case 'a': hdir = -1; break;
 		case 'w': vdir =  1; break;
 		case 's': vdir = -1; break;
-		case 'e': skip =  1; break;
+		case 'q': skip =  1; break;
 		case ' ': skip =  1; break;
+		case 'e': interact = 1; break;
 		default: break;
 	}
 }
