@@ -1,12 +1,3 @@
-#ifndef __INIT
-#include <iostream>
-#include <string>
-#include <vector>
-#include <queue>
-#include "iGraphics.h"
-#define __INIT
-#endif
-
 enum OBJECT_TYPE {
 	NOONE,
 	PLAYER,
@@ -29,7 +20,9 @@ class GameInstance : Instance {
 
 	public:
 		GameInstance() {}
-		GameInstance(int row, int col, int moves, int hp, int face, Sprite* sprite, OBJECT_TYPE type) : row(row), col(col), moves(moves), hp(hp), face(face), sprite(sprite), type(type) {}
+		GameInstance(int row, int col, int moves, int hp, int face, Sprite* sprite, OBJECT_TYPE type) : row(row), col(col), moves(moves), hp(hp), face(face), sprite(sprite), type(type) {
+			this->sprite->set_image_index(0);
+		}
 		
 		int get_row() {
 			return this->row;
@@ -86,6 +79,10 @@ class GameInstance : Instance {
 		void hit(int damage) {
 			this->hp -= damage;
 			std::cout << hp << " GameInstance hit.\n";
+		}
+
+		void animate(int image_speed = 1) {
+			this->sprite->change_index_relative(image_speed);
 		}
 
 		~GameInstance() {

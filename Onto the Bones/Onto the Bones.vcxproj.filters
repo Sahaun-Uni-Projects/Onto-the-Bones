@@ -56,6 +56,9 @@
     <ClInclude Include="otb_levels.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="otb_strings.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="GLUT32.DLL" />

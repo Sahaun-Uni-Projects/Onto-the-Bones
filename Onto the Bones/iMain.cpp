@@ -30,6 +30,7 @@
 
 #pragma region Dependencies
 #include "otb_utils.h"
+#include "otb_strings.h"
 #include "otb_sprites.h"
 #include "otb_graphics.h"
 #include "otb_input.h"
@@ -103,9 +104,9 @@ vector<vector<int>> world_init(vector<string>& temp, char delimiter = LEVEL_LAYO
 				case 'P': player = instance_create(r, c, 2, PLAYER_MAX_HP, sPlayer, PLAYER); break;
 				case 'G': BonePos[0] = r; BonePos[1] = c; break;
 				
-				case 'a': instance_create(r, c, 3, 1, sEnemy, ENEMY); break;
-				case 'b': instance_create(r, c, 2, 2, sEnemy, ENEMY); break;
-				case 'c': instance_create(r, c, 1, 3, sEnemy, ENEMY); break;
+				case 'a': instance_create(r, c, 3, 1, sBat, ENEMY); break;
+				case 'b': instance_create(r, c, 2, 2, sHound, ENEMY); break;
+				case 'c': instance_create(r, c, 1, 3, sSnail, ENEMY); break;
 
 				default: grid[r][c] = int(temp[i][j]-'0'); break;
 			}
@@ -118,13 +119,13 @@ vector<vector<int>> world_init(vector<string>& temp, char delimiter = LEVEL_LAYO
 }
 vector<vector<int>> generate_heatmap(GameInstance* instance) {
 	int rows = GridRows, cols = GridCols;
-	vector<vector<int>> map(rows, vector<int>(cols,0));
+	vector<vector<int>> map(rows, vector<int>(cols,INFINITY));
 	vector<vector<bool>> visited(rows, vector<bool>(cols,false));
 
 	for (int i = 0; i < rows; ++i) {
 		for (int j = 0; j < cols; ++j) {
 			if (Grid[i][j] == 0) {
-				map[i][j] = 100;
+				map[i][j] = INFINITY;
 				visited[i][j] = true;
 			}
 		}
@@ -138,6 +139,7 @@ vector<vector<int>> generate_heatmap(GameInstance* instance) {
 	queue<pair<int,int>> q;
 	pair<int,int> p;
 	q.push(make_pair(r,c));
+	map[r][c] = 0;
 	visited[r][c] = true;
 
 	while (!q.empty()) {
@@ -147,8 +149,7 @@ vector<vector<int>> generate_heatmap(GameInstance* instance) {
 
 		for (int i = 0; i < 4; ++i) {
 			for (int j = 0; j < 4; ++j) {
-				int rr = r + dr[i],
-					cc = c + dc[j];
+				int rr = r + dr[i], cc = c + dc[j];
 				if (!cell_is_valid(rr,cc) || visited[rr][cc]) continue;
 				visited[rr][cc] = true;
 				map[rr][cc] = map[r][c] + 1;
@@ -199,11 +200,11 @@ void draw_sprite_at_cell_offset(int row, int col, Sprite* spr, int dx, int dy, i
 void draw_sprite_at_cell(int row, int col, Sprite* spr, int face) {
 	draw_sprite_at_cell_offset(row, col, spr, round((CELL_WIDTH-spr->get_width())/2.), round((CELL_HEIGHT-spr->get_height())/2.), face);
 }
-void draw_instance(GameInstance *inst) {
+void draw_instance(GameInstance *inst, int dx = 0, int dy = 0) {
 	if (!instance_exists(inst)) return;
 	int row = inst->get_row(), col = inst->get_col();
-	draw_sprite_at_cell(row, col, inst->get_sprite(), inst->get_face());
-	draw_circle_color(coord_x(col), coord_y(row)+32, 3, c_green, true);
+	draw_sprite_at_cell_offset(row, col, inst->get_sprite(), dx, dy, inst->get_face());
+	//draw_circle_color(coord_x(col), coord_y(row)+32, 3, c_green, true);
 }
 #pragma endregion
 
@@ -256,20 +257,26 @@ void rooms_init() {
 	rMenu = new Room("Menu",
 		// Create
 		function<void(void)>([](void) {
-			// Menu Init
-			optionSelected = 0;
-			
+			options.clear();
+
+			// Menu Init	
 			options.push_back(make_pair("Play", function<void(void)>([](void){
 					Level = 1;
 					room_goto(rGame);
 				})
 			));
-			options.push_back(make_pair("Play", function<void(void)>([](void){
-					Level = 1;
-					room_goto(rGame);
+					
+			options.push_back(make_pair("Highscores", function<void(void)>([](void){
+					room_goto(rHighscores);
 				})
 			));
 
+			options.push_back(make_pair("Quit", function<void(void)>([](void){
+					exit(0);
+				})
+			));
+				
+			optionSelected = 0;
 			optionsCount = options.size();
 			
 			// Pause timer
@@ -279,7 +286,7 @@ void rooms_init() {
 		function<void(void)>([](void) {
 			// Handle input
 			if (abs(vdir)) {
-				optionSelected += vdir;
+				optionSelected -= vdir;
 				input_refresh();
 
 				if (optionSelected < 0) optionSelected = optionsCount-1;
@@ -287,7 +294,7 @@ void rooms_init() {
 			}
 
 			if (interact) {
-				(options[optionSelected].second)();
+				options[optionSelected].second();
 				input_refresh();
 			}
 		}),
@@ -295,11 +302,18 @@ void rooms_init() {
 		function<void(void)>([](void) {
 			// Text
 			int tx = WIN_WIDTH/2, ty = WIN_HEIGHT/2;
+			int xx;
+			char* text;
 
 			for (int i = 0; i < optionsCount; ++i) {
-				if (i == optionSelected) draw_text_color(tx-20, ty, ">", c_black);
-				draw_text_color(tx, ty, &options[i].first[0], c_black);
-				ty -= 20;
+				text = to_cstring(options[i].first);
+
+				xx = tx - string_width(text)/2;
+
+				if (i == optionSelected) draw_text_color(xx-20, ty+2, ">", c_black);
+				draw_text_color(xx, ty, text, c_black);
+
+				ty -= 40;
 			}
 		})
 	);
@@ -318,7 +332,7 @@ void rooms_init() {
 
 			// Initialize World
 			Grid = world_init(get_level_layout(Level));
-			HeatMap = vector<vector<int>>(GridRows, vector<int>(GridCols, 0));
+			HeatMap = vector<vector<int>>(GridRows, vector<int>(GridCols, INFINITY));
 			HeatMap = generate_heatmap(player);
 	
 			// Game
@@ -379,6 +393,7 @@ void rooms_init() {
 							while (!InputQueue.empty()) {
 								if (InputQueue.front() != curr) break;
 								InputQueue.pop();
+								inst->animate();
 							}
 						} else {
 							int r = inst->get_row()+vdir, c = inst->get_col()+hdir;
@@ -391,18 +406,18 @@ void rooms_init() {
 								// Direction
 								if (hdir) inst->set_face(hdir);
 
+								// Heatmap
+								HeatMap = generate_heatmap(inst);
+								for (int i = 0; i < GridRows; ++i) {
+									for (int j = 0; j < GridCols; ++j) cout << HeatMap[i][j] << " ";
+									cout << endl;
+								}
+
 								// Handle Inputs
 								input_refresh();
 								InputQueue.pop();
-
-								// Heatmap
-								HeatMap = generate_heatmap(inst);
-								/*for (int i = 0; i < GridRows; ++i) {
-									for (int j = 0; j < GridCols; ++j) cout << HeatMap[i][j] << " ";
-									cout << endl;
-								}*/
-
-								// Check winning condition
+								inst->animate();
+							} else if (interact) {
 								if ((r == BonePos[0]) && (c == BonePos[1])) {
 									++Level;
 									room_goto(rGame);
@@ -418,15 +433,24 @@ void rooms_init() {
 						if (cell_in_bounds(row, col-1)) mc = min(mc, HeatMap[row][col-1]);
 						if (cell_in_bounds(row, col+1)) mc = min(mc, HeatMap[row][col+1]);
 
-						if (!mr || !mc) {
+						// Player is near
+						if ((mr == 0) || (mc == 0)) {
 							hit_instance(player, 1);
-						} else if ((mr != INFINITY) && (mc != INFINITY)) {
+							if (player->get_hp() <= 0) {
+								room_goto(rGameOver);
+								return;
+							}
+						} else if ((mr != INFINITY) || (mc != INFINITY)) {
 							if (mc < mr) {
-								if (cell_in_bounds(row, col-1) && (HeatMap[row][col-1] == mc)) inst->move_relative(0, -1);
-									else if (cell_in_bounds(row, col+1) && (HeatMap[row][col+1] == mc)) inst->move_relative(0, 1);
+								if (mc <= HeatMap[row][col]) {
+									if (cell_in_bounds(row, col-1) && (HeatMap[row][col-1] == mc)) inst->move_relative(0, -1);
+										else if (cell_in_bounds(row, col+1) && (HeatMap[row][col+1] == mc)) inst->move_relative(0, 1);
+								}
 							} else {
-								if (cell_in_bounds(row-1, col) && (HeatMap[row-1][col] == mr)) inst->move_relative(-1, 0);
-									else if (cell_in_bounds(row+1, col) && (HeatMap[row+1][col] == mr)) inst->move_relative(1, 0);
+								if (mr <= HeatMap[row][col]) {
+									if (cell_in_bounds(row-1, col) && (HeatMap[row-1][col] == mr)) inst->move_relative(-1, 0);
+										else if (cell_in_bounds(row+1, col) && (HeatMap[row+1][col] == mr)) inst->move_relative(1, 0);
+								}
 							}
 						}
 				
@@ -434,6 +458,9 @@ void rooms_init() {
 						if (abs(dir)) inst->set_face(dir);
 
 						InputQueue.pop();
+						inst->animate();
+
+						// Move ended
 						if (instance_exists(player)) {
 							if (InputQueue.empty() || (!InputQueue.empty() && (InputQueue.front() != instance_get_number(inst)))) {
 								dir = sign(player->get_col()-inst->get_col());
@@ -481,7 +508,8 @@ void rooms_init() {
 	
 			// Instances
 			for (int i = 0; i < int(InstancesList.size()); ++i) {
-				draw_instance(InstancesList[i]);
+				GameInstance* inst = InstancesList[i];
+				draw_instance(inst, 3, 12);
 			}
 
 			// Lives
@@ -496,20 +524,45 @@ void rooms_init() {
 	);
 	#pragma endregion
 	
+	#pragma region rHighscores
+	rHighscores = new Room("Highscores",
+		// Create
+		function<void(void)>([](void) {
+			
+		}),
+		// Step
+		function<void(void)>([](void) {
+			
+		}),
+		// Draw
+		function<void(void)>([](void) {
+			
+		})
+	);
+	#pragma endregion
+
 	#pragma region rGameOver
 	rGameOver = new Room("Game Over",
 		// Create
 		function<void(void)>([](void) {
+			// Pause Timers
+			pause_game_timers();
 		}),
 		// Step
 		function<void(void)>([](void) {
+			if (interact) {
+				room_goto(rMenu);
+				input_refresh();
+			}
 		}),
 		// Draw
 		function<void(void)>([](void) {
+			char* text = "Press E to restart";
+			draw_text((WIN_WIDTH-string_width(text))/2, WIN_HEIGHT/2, text);
 		})
 	);
 	#pragma endregion
-};
+}
 
 void game_init() {
 	// Load sprites
@@ -528,6 +581,7 @@ void game_init() {
 	rooms_init();
 	room_goto(rMenu);
 }
+
 
 // ------------------- iGraphics
 

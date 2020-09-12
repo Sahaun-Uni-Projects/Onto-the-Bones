@@ -1,22 +1,15 @@
-#ifndef __INIT
-#include <iostream>
-#include <string>
-#include <vector>
-#include <queue>
-#include "iGraphics.h"
-#define __INIT
-#endif
-
 #define c_white 0xFFFFFF
 #define c_black 0x000000
 #define c_red   0xFF0000
 #define c_green 0x00FF00
 #define c_blue  0x0000FF
 
+
 // ------------------- System
 namespace Sys {
 	int currentColor = c_white;
 	int circleSmoothness = 75;
+	void* defaultFont = GLUT_BITMAP_TIMES_ROMAN_24;
 };
 
 
@@ -73,19 +66,32 @@ void draw_circle_color(double x, double y, double radius, int color, bool filled
 }
 
 void draw_circle(double x, double y, double radius, bool filled = false, int smoothness = Sys::circleSmoothness) {
-		draw_circle_color(x, y, radius, draw_get_color(), filled, smoothness);
+	draw_circle_color(x, y, radius, draw_get_color(), filled, smoothness);
 }
 #pragma endregion
 
 #pragma region Text
-void draw_text_color(double x, double y, char* text, int color) {
+void draw_text_general(double x, double y, char* text, int color, void* font) {
 	int col = draw_get_color();
 	draw_set_color(color);
-	iText(x, y, text);
+	iText(x, y, text, font);
 	draw_set_color(col);
+}
+void draw_text_general(double x, double y, std::string text, int color, void* font) {
+	draw_text_general(x, y, to_cstring(text), color, font);
+}
+
+void draw_text_color(double x, double y, char* text, int color) {
+	draw_text_general(x, y, text, color, Sys::defaultFont);
+}
+void draw_text_color(double x, double y, std::string text, int color) {
+	draw_text_color(x, y, to_cstring(text), color);
 }
 
 void draw_text(double x, double y, char* text) {
-	draw_text_color(x, y, text, Sys::circleSmoothness);
+	draw_text_general(x, y, text, c_white, Sys::defaultFont);
+}
+void draw_text(double x, double y, std::string text) {
+	draw_text(x, y, to_cstring(text));
 }
 #pragma endregion

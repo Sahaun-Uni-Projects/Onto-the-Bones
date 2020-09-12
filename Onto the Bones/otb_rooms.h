@@ -1,18 +1,18 @@
 class Room {
 	std::function<void(void)> fcreate, fstep, fdraw;
-	char* name;
+	std::string name;
 
 	public:
 
 		Room() {}
-		Room(char* name, std::function<void(void)> fcreate, std::function<void(void)> fstep, std::function<void(void)> fdraw) : fcreate(fcreate), fstep(fstep), fdraw(fdraw) {}
+		Room(std::string name, std::function<void(void)> fcreate, std::function<void(void)> fstep, std::function<void(void)> fdraw) : fcreate(fcreate), fstep(fstep), fdraw(fdraw) {}
 		Room(std::function<void(void)> fcreate, std::function<void(void)> fstep, std::function<void(void)> fdraw) : fcreate(fcreate), fstep(fstep), fdraw(fdraw) {}
 		
-		char* get_name() {
+		std::string get_name() {
 			return this->name;
 		}
 
-		void set_name(char* name) {
+		void set_name(std::string name) {
 			this->name = name;
 		}
 
@@ -30,7 +30,7 @@ class Room {
 };
 
 Room *room;
-Room *rMenu, *rGame, *rGameOver;
+Room *rMenu, *rGame, *rGameOver, *rHighscores;
 
 // Functions
 void room_goto(Room* targRoom, bool exec = true) {

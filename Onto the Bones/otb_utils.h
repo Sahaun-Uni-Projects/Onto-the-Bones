@@ -20,7 +20,7 @@ T clamp(T n, T mn, T mx) {
 
 template<typename T>
 int sign(T n) {
-	if (n > 0) return 1;
+	if (n > 0) return  1;
 	if (n < 0) return -1;
 	return 0;
 }

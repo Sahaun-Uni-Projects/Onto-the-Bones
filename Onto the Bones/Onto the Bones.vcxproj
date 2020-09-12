@@ -66,6 +66,7 @@
     <ClInclude Include="bitmap_loader.h" />
     <ClInclude Include="otb_levels.h" />
     <ClInclude Include="otb_rooms.h" />
+    <ClInclude Include="otb_strings.h" />
     <ClInclude Include="otb_utils.h" />
     <ClInclude Include="glaux.h" />
     <ClInclude Include="glut.h" />

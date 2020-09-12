@@ -1,12 +1,3 @@
-#ifndef __INIT
-#include <iostream>
-#include <string>
-#include <vector>
-#include <queue>
-#include "iGraphics.h"
-#define __INIT
-#endif
-
 int hdir, vdir, skip, interact;
 void input_refresh() {
 	hdir = 0;
