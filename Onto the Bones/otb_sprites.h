@@ -1,5 +1,6 @@
 class Sprite {
 	int width, height, image_index, image_number;
+	int xoffset, yoffset;
 	std::vector<int> textures;
 	std::string path;
 
@@ -20,7 +21,7 @@ class Sprite {
 	}
 
 	public:
-		Sprite(int width, int height, char* path) : width(width), height(height), path(path) {
+		Sprite(int width, int height, char* path, int xoffset = 0, int yoffset = 0) : width(width), height(height), path(path), xoffset(xoffset), yoffset(yoffset) {
 			parse_path();
 			image_index = 0;
 			image_number = textures.size();
@@ -59,6 +60,14 @@ class Sprite {
 		int get_tex(int index) {
 			return this->textures[index];
 		}
+
+		int get_xoffset() {
+			return this->xoffset;
+		}
+
+		int get_yoffset() {
+			return this->yoffset;
+		}
 };
 
 Sprite *sNoone;
@@ -71,17 +80,17 @@ Sprite *bgSky;
 
 void sprites_init() {
 	sNoone  = new Sprite(16, 16, "Sprites/sNoone.png");
-	sPlayer = new Sprite(37, 32, "Sprites/sDog1.png|sDog2.png");
-	sBat  = new Sprite(32, 32, "Sprites/sBat1.png|sBat2.png|sBat1.png");
+	sPlayer = new Sprite(37, 32, "Sprites/sDog1.png|sDog2.png", 3);
+	sBat    = new Sprite(32, 32, "Sprites/sBat1.png|sBat2.png|sBat1.png");
 	sSnail  = new Sprite(41, 31, "Sprites/sSnail1.png|sSnail2.png|sSnail3.png");
-	sHound = new Sprite(57, 32, "Sprites/sHound1.png|sHound2.png|sHound3.png|sHound4.png");
+	sHound  = new Sprite(57, 32, "Sprites/sHound1.png|sHound2.png|sHound3.png|sHound4.png", -4);
 
-	sBone = new Sprite(24, 24, "Sprites/sBone.png");
-	sHeartFull = new Sprite(16, 16, "Sprites/sHeartFull.png");
+	sBone		= new Sprite(24, 24, "Sprites/sBone.png");
+	sHeartFull  = new Sprite(16, 16, "Sprites/sHeartFull.png");
 	sHeartEmpty = new Sprite(16, 16, "Sprites/sHeartEmpty.png");
 
-	sGround = new Sprite(48, 96, "Sprites/sGround.png");
-	sGroundAlert = new Sprite(48, 96, "Sprites/sGroundAlert.png");
+	sGround			   = new Sprite(48, 96, "Sprites/sGround.png");
+	sGroundAlert	   = new Sprite(48, 96, "Sprites/sGroundAlert.png");
 	sGroundHighlighted = new Sprite(48, 96, "Sprites/sGroundHighlighted.png");
 
 	bgSky = new Sprite(1350, 540, "Sprites/bgSky.png");

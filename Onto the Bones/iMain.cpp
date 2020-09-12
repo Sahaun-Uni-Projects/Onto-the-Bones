@@ -203,7 +203,8 @@ void draw_sprite_at_cell(int row, int col, Sprite* spr, int face) {
 void draw_instance(GameInstance *inst, int dx = 0, int dy = 0) {
 	if (!instance_exists(inst)) return;
 	int row = inst->get_row(), col = inst->get_col();
-	draw_sprite_at_cell_offset(row, col, inst->get_sprite(), dx, dy, inst->get_face());
+	Sprite* spr = inst->get_sprite();
+	draw_sprite_at_cell_offset(row, col, spr, dx+spr->get_xoffset(), dy, inst->get_face());
 	//draw_circle_color(coord_x(col), coord_y(row)+32, 3, c_green, true);
 }
 #pragma endregion
@@ -309,6 +310,7 @@ void rooms_init() {
 				text = to_cstring(options[i].first);
 
 				xx = tx - string_width(text)/2;
+				if (i == 0) xx += 3;
 
 				if (i == optionSelected) draw_text_color(xx-20, ty+2, ">", c_black);
 				draw_text_color(xx, ty, text, c_black);
@@ -509,7 +511,7 @@ void rooms_init() {
 			// Instances
 			for (int i = 0; i < int(InstancesList.size()); ++i) {
 				GameInstance* inst = InstancesList[i];
-				draw_instance(inst, 3, 12);
+				draw_instance(inst, 0, 12);
 			}
 
 			// Lives
@@ -557,8 +559,23 @@ void rooms_init() {
 		}),
 		// Draw
 		function<void(void)>([](void) {
-			char* text = "Press E to restart";
-			draw_text((WIN_WIDTH-string_width(text))/2, WIN_HEIGHT/2, text);
+			string text;
+			int xx;
+			
+			xx = WIN_WIDTH/2 - 68;
+			text = "YOU";
+			draw_text_color(xx, WIN_HEIGHT/2+20, text, c_black);
+			
+			xx += 60;
+			text = "DIED";
+			draw_text_color(xx, WIN_HEIGHT/2+20, text, c_red);
+			
+			xx += 60;
+			text = "!";
+			draw_text_color(xx, WIN_HEIGHT/2+20, text, c_black);
+			
+			text = "Press E to restart";
+			draw_text_color((WIN_WIDTH-string_width(text))/2, WIN_HEIGHT/2-50, text, c_black);
 		})
 	);
 	#pragma endregion
