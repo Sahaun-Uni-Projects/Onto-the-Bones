@@ -1,5 +1,6 @@
 #ifndef __INIT
 #include <iostream>
+#include <string>
 #include <string.h>
 #include <vector>
 #include <queue>
@@ -54,7 +55,7 @@ int GridRows, GridCols;
 vector<vector<int>> Grid, HeatMap;
 
 // Game
-int GamePos[2], GameBasePos[2], GameLenRange[2];
+int GamePos[2], GameBasePos[2], GameAmplitudeRange[2];
 int GameTimer, GameDir, GameLen;
 vector<int> GameTimers;
 int BonePos[2], BoneScale;
@@ -87,6 +88,34 @@ int coord_y(int row) {
 }
 #pragma endregion
 
+#pragma region Instances
+GameInstance* instance_get_at_cell(int row, int col) {
+	for (int i = 0; i < int(InstancesList.size()); ++i) {
+		GameInstance* inst = InstancesList[i];
+		if (inst == noone) continue;
+		if ((inst->get_row() == row) && (inst->get_col() == col)) return inst;
+	}
+	return noone;
+}
+int instance_get_number(GameInstance* inst) {
+	for (int i = 0; i < int(InstancesList.size()); ++i) {
+		if (InstancesList[i] == inst) return i;
+	}
+	return -1;
+}
+void hit_instance(GameInstance *inst, int damage) {
+	if (!instance_exists(inst)) return;
+	inst->hit(damage);
+	if (inst->get_hp() <= 0) {
+		InstancesList[instance_get_number(inst)] = noone;
+	}
+}
+void instance_face_towards(GameInstance* inst, GameInstance* target) {
+	int dir = sign(target->get_col()-inst->get_col());
+	if (abs(dir)) inst->set_face(dir);
+}
+#pragma endregion
+
 #pragma region World
 vector<vector<int>> world_init(vector<string>& temp, char delimiter = LEVEL_LAYOUT_DELIMITER) {
 	int rows = int(temp.size()), cols = (int(temp[0].size())>>1)+1;
@@ -104,9 +133,9 @@ vector<vector<int>> world_init(vector<string>& temp, char delimiter = LEVEL_LAYO
 				case 'P': player = instance_create(r, c, 2, PLAYER_MAX_HP, sPlayer, PLAYER); break;
 				case 'G': BonePos[0] = r; BonePos[1] = c; break;
 				
-				case 'a': instance_create(r, c, 3, 1, sBat, ENEMY); break;
-				case 'b': instance_create(r, c, 2, 2, sHound, ENEMY); break;
-				case 'c': instance_create(r, c, 1, 3, sSnail, ENEMY); break;
+				case 'a': instance_create(r, c,    3, 1,    sBat,   ENEMY); break;
+				case 'b': instance_create(r, c,    2, 2,    sHound, ENEMY); break;
+				case 'c': instance_create(r, c,    1, 3,    sSnail, ENEMY); break;
 
 				default: grid[r][c] = int(temp[i][j]-'0'); break;
 			}
@@ -150,7 +179,7 @@ vector<vector<int>> generate_heatmap(GameInstance* instance) {
 		for (int i = 0; i < 4; ++i) {
 			for (int j = 0; j < 4; ++j) {
 				int rr = r + dr[i], cc = c + dc[j];
-				if (!cell_is_valid(rr,cc) || visited[rr][cc]) continue;
+				if (!cell_is_valid(rr,cc) || visited[rr][cc] || (instance_get_at_cell(rr,cc) != noone)) continue;
 				visited[rr][cc] = true;
 				map[rr][cc] = map[r][c] + 1;
 				q.push(make_pair(rr,cc));
@@ -159,30 +188,6 @@ vector<vector<int>> generate_heatmap(GameInstance* instance) {
 	}
 
 	return map;
-}
-#pragma endregion
-
-#pragma region Instances
-GameInstance* instance_get_at_cell(int row, int col) {
-	for (int i = 0; i < int(InstancesList.size()); ++i) {
-		GameInstance* inst = InstancesList[i];
-		if ((inst->get_row() == row) && (inst->get_col() == col)) return inst;
-	}
-	return noone;
-}
-int instance_get_number(GameInstance* inst) {
-	for (int i = 0; i < int(InstancesList.size()); ++i) {
-		if (InstancesList[i] == inst) return i;
-	}
-	return -1;
-}
-void hit_instance(GameInstance *inst, int damage) {
-	if (!instance_exists(inst)) return;
-	inst->hit(damage);
-	if (inst->get_hp() <= 0) {
-		int pos = instance_get_number(inst);
-		if (pos > -1) InstancesList[pos] = noone;
-	}
 }
 #pragma endregion
 
@@ -236,12 +241,22 @@ void timer_step500() {
 	GamePos[1] += GameDir;
 	if (!--GameLen) {
 		GameDir *= -1;
-		GameLen = irandom_range(GameLenRange[0], GameLenRange[1]);
+		GameLen = irandom_range(GameAmplitudeRange[0], GameAmplitudeRange[1]);
 	}
 	if (abs(GamePos[1]-GameBasePos[1]) >= 20) GameDir *= -1;
 }
 #pragma endregion
 
+#pragma region Debugging
+void log_vec2d(vector<vector<int>> grid) {
+	cout << ">>>>>>>>>>>>>>>>>\n";
+	for (int i = 0; i < int(grid.size()); ++i) {
+		for (int j = 0; j < int(grid[i].size()); ++j) cout << grid[i][j] << " ";
+		cout << "\n";
+	}
+	cout << "<<<<<<<<<<<<<<<<<\n";
+}
+#pragma endregion
 
 // ------------------- Game Init
 
@@ -328,6 +343,9 @@ void rooms_init() {
 			// Clear Instances
 			InstancesList.clear();
 
+			// Reset bone position
+			BonePos[0] = BonePos[1] = -1;
+
 			// Initialize Input
 			while (!InputQueue.empty()) InputQueue.pop();
 			input_refresh();
@@ -342,46 +360,52 @@ void rooms_init() {
 			GameBasePos[1] = (WIN_HEIGHT-GridRows*CELL_HEIGHT)/2+10;
 			GamePos[0] = GameBasePos[0];
 			GamePos[1] = GameBasePos[1];
-			GameLenRange[0] = 3;
-			GameLenRange[1] = 4;
+			GameAmplitudeRange[0] = 3;
+			GameAmplitudeRange[1] = 4;
 			GameTimer = 0;
 			GameDir = irandom(1)*2-1;
-			GameLen = irandom_range(GameLenRange[0], GameLenRange[1]);
+			GameLen = irandom_range(GameAmplitudeRange[0], GameAmplitudeRange[1]);
 
 			// Initialize Instances
-			noone  = new Noone();
 			BoneScale = irandom(1)*2-1;
 
-			// Put player on top of instance list/ input queue
-			reverse(InstancesList.begin(), InstancesList.end());
+			// Put player on top of instance list/ input queue and sort
 			for (int i = 0; i < int(InstancesList.size()); ++i) {
 				if (InstancesList[i]->get_object_type() == PLAYER) {
-					GameInstance* inst = InstancesList[i];
-					InstancesList.push_back(inst);
-					InstancesList.erase(InstancesList.begin()+i);
+					swap(InstancesList[0], InstancesList[i]);
+					break;
 				}
 			}
-			reverse(InstancesList.begin(), InstancesList.end());
+			sort(InstancesList.begin()+1, InstancesList.end(), [](GameInstance* inst1, GameInstance* inst2) {
+				return (inst1->get_moves() < inst2->get_moves());
+			});
+
+			// Set faces
+			for (int i = 0; i < int(InstancesList.size()); ++i) {
+				instance_face_towards(InstancesList[i], player);
+			}
 
 			// Start timer
 			resume_game_timers();
 		}),
 		// Step
 		function<void(void)>([](void) {
+			if (restart) {
+				input_refresh();
+				room_goto(rGame);
+			}
 			// Handle movement
 			if (InputQueue.empty()) {
 				// Feed inputs
 				for (int i = 0; i < int(InstancesList.size()); ++i) {
 					GameInstance* inst = InstancesList[i];
-					if (inst == noone) {
-						InstancesList.erase(InstancesList.begin()+i);
-						continue;
-					}
+					if (inst == noone) continue;
 					for (int j = 0; j < inst->get_moves(); ++j) InputQueue.push(i);
 				}
 			} else {
 				int curr = InputQueue.front();
 				GameInstance *inst = InstancesList[curr];
+				//cout << curr << endl;
 		
 				if (!instance_exists(inst)) {
 					// Instance is destroyed
@@ -402,7 +426,7 @@ void rooms_init() {
 							if ((hdir || vdir) && cell_is_valid(r,c)) {
 								// Move
 								GameInstance* other = instance_get_at_cell(r,c);
-								if (other != noone) hit_instance(other, 1);
+								if (other != noone) hit_instance(other,1);
 									else inst->set_pos(r,c);
 					
 								// Direction
@@ -410,16 +434,15 @@ void rooms_init() {
 
 								// Heatmap
 								HeatMap = generate_heatmap(inst);
-								for (int i = 0; i < GridRows; ++i) {
-									for (int j = 0; j < GridCols; ++j) cout << HeatMap[i][j] << " ";
-									cout << endl;
-								}
+								//log_vec2d(HeatMap);
 
 								// Handle Inputs
 								input_refresh();
 								InputQueue.pop();
 								inst->animate();
+
 							} else if (interact) {
+								// Check for bone
 								if ((r == BonePos[0]) && (c == BonePos[1])) {
 									++Level;
 									room_goto(rGame);
@@ -455,19 +478,24 @@ void rooms_init() {
 								}
 							}
 						}
-				
+						
+						// Set face
 						int dir = sign(inst->get_col()-col);
 						if (abs(dir)) inst->set_face(dir);
 
+						// End move
 						InputQueue.pop();
 						inst->animate();
 
-						// Move ended
+						// Face towards player
 						if (instance_exists(player)) {
 							if (InputQueue.empty() || (!InputQueue.empty() && (InputQueue.front() != instance_get_number(inst)))) {
-								dir = sign(player->get_col()-inst->get_col());
-								if (abs(dir)) inst->set_face(dir);
+								instance_face_towards(inst, player);
 							}
+
+							// Generate HeatMap
+							HeatMap = generate_heatmap(player);
+							log_vec2d(HeatMap);
 						}
 					}
 				}
@@ -514,6 +542,7 @@ void rooms_init() {
 				draw_instance(inst, 0, 12);
 			}
 
+			#pragma region UI
 			// Lives
 			if (instance_exists(player)) {
 				int hx = 20, hy = 504;
@@ -522,6 +551,14 @@ void rooms_init() {
 					hx += 25;
 				}
 			}
+
+			// Level
+			draw_rectangle_color(0, 0, 118, 38, c_black, true);
+
+			string str = to_string(long long(Level));
+			str = string(max(0, 3-string_length(str)), '0') + str;
+			draw_text_color(10, 10, "Level: " + str, c_white);
+			#pragma endregion
 		})
 	);
 	#pragma endregion
@@ -552,8 +589,8 @@ void rooms_init() {
 		}),
 		// Step
 		function<void(void)>([](void) {
-			if (interact) {
-				room_goto(rMenu);
+			if (restart) {
+				room_goto(rGame);
 				input_refresh();
 			}
 		}),
@@ -574,7 +611,7 @@ void rooms_init() {
 			text = "!";
 			draw_text_color(xx, WIN_HEIGHT/2+20, text, c_black);
 			
-			text = "Press E to restart";
+			text = "Press R to restart";
 			draw_text_color((WIN_WIDTH-string_width(text))/2, WIN_HEIGHT/2-50, text, c_black);
 		})
 	);
@@ -621,6 +658,7 @@ int main() {
 
 	// Game
 	game_init();
+	noone = new Noone();
 	
 	// Start
 	iStart();

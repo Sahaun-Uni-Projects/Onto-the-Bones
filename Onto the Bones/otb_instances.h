@@ -91,10 +91,6 @@ class GameInstance : Instance {
 };
 std::vector<GameInstance*> InstancesList;
 
-/**
- * Object definitions
- */
-
 class Enemy : public GameInstance {
 	public:
 		Enemy() {}
@@ -111,10 +107,6 @@ class Noone : public GameInstance {
 	public:
 		Noone() : GameInstance(0, 0, 9999, 9999, 1, sNoone, NOONE) {}
 };
-
-/**
- * Functions
- */
 
 GameInstance* instance_create(int x, int y, int moves, int hp, Sprite* sprite, OBJECT_TYPE type) {
 	GameInstance* inst;

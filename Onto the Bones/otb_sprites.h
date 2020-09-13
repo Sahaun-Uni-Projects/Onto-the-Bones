@@ -83,7 +83,7 @@ void sprites_init() {
 	sPlayer = new Sprite(37, 32, "Sprites/sDog1.png|sDog2.png", 3);
 	sBat    = new Sprite(32, 32, "Sprites/sBat1.png|sBat2.png|sBat1.png");
 	sSnail  = new Sprite(41, 31, "Sprites/sSnail1.png|sSnail2.png|sSnail3.png");
-	sHound  = new Sprite(57, 32, "Sprites/sHound1.png|sHound2.png|sHound3.png|sHound4.png", -4);
+	sHound  = new Sprite(57, 32, "Sprites/sHound1.png|sHound3.png", -4);
 
 	sBone		= new Sprite(24, 24, "Sprites/sBone.png");
 	sHeartFull  = new Sprite(16, 16, "Sprites/sHeartFull.png");
@@ -98,7 +98,7 @@ void sprites_init() {
 
 void draw_sprite_ext(int x, int y, Sprite* spr, int xscale, int yscale) {
 	if (xscale == 1) iShowImage(x, y, spr->get_width(), spr->get_height(), spr->get_tex());
-		else iShowImage(x+spr->get_width(), y, -spr->get_width(), spr->get_height(), spr->get_tex());
+		else if (xscale == -1) iShowImage(x+spr->get_width(), y, -spr->get_width(), spr->get_height(), spr->get_tex());
 }
 
 void draw_sprite(int x, int y, Sprite* spr) {

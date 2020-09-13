@@ -2,7 +2,7 @@ std::vector<std::string> get_level_layout(int level) {
 	std::vector<std::string> layout;
 
 	switch (level) {
-		case 4:
+		case 1:
 			layout.push_back("P 1 1 1 1 1 1 1 1 1 1 1 1 G");
 		break;
 
@@ -24,7 +24,7 @@ std::vector<std::string> get_level_layout(int level) {
 			layout.push_back("1 1 P 1 1 1 1 1 1 1 1 1 1 1 G");
 		break;
 
-		case 1:
+		case 4:
 			layout.push_back("1 1 1 1 1 1 1 1 1 1 1");
 			layout.push_back("1 1 1 0 0 1 1 1 0 1 1");
 			layout.push_back("1 1 b 0 0 1 1 1 0 1 c");
@@ -38,6 +38,14 @@ std::vector<std::string> get_level_layout(int level) {
 			layout.push_back("1 1 1 0 0 1 1 1 0 1 1");
 			layout.push_back("P 1 1 1 1 1 0 1 0 1 G");
 			layout.push_back("1 1 1 0 0 1 0 1 1 1 0");
+		break;
+
+		case 6:
+			layout.push_back("1 c 1 1 1 1 1 1");
+			layout.push_back("1 0 0 b 1 0 0 b");
+			layout.push_back("1 0 0 1 1 0 0 1");
+			layout.push_back("1 0 0 1 1 0 0 1");
+			layout.push_back("P 1 1 1 G 1 1 1");
 		break;
 
 		default:
