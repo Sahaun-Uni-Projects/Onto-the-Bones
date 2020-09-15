@@ -1,10 +1,15 @@
-int hdir, vdir, skip, interact, restart;
+#define KEY_ENTER 13
+#define KEY_ESC	  27
+#define KEY_SPACE 32
+
+int hdir, vdir, skip, interact, restart, pause;
 void input_refresh() {
 	hdir = 0;
 	vdir = 0;
 	skip = 0;
 	interact = 0;
 	restart = 0;
+	pause = 0;
 }
 
 void iPassiveMouse(int x, int y) {}
@@ -18,9 +23,12 @@ void iKeyboard(unsigned char key) {
 		case 'w': vdir =  1; break;
 		case 's': vdir = -1; break;
 		case 'q': skip =  1; break;
-		case ' ': skip =  1; break;
 		case 'r': restart =  1; break;
 		case 'e': interact = 1; break;
+
+		case KEY_SPACE: skip =  1;	  break;
+		case KEY_ENTER: interact = 1; break;
+		case KEY_ESC  : pause = 1;	  break;
 		default: break;
 	}
 }

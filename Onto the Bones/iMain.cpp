@@ -67,9 +67,11 @@ vector<vector<int>> Grid, HeatMap;
 // Game
 int GamePos[2], GameBasePos[2], GameAmplitudeRange[2];
 int GameTimer, GameDir, GameLen;
-vector<int> GameTimers;
+vector<int> GameTimers, AllTimers;
+
 int BonePos[2], BoneScale;
-int Level;
+int Level, Tries, Kills, CurrKills;
+bool Paused = false;
 
 // Menu
 vector<pair<string, function<void(void)>>> options;
@@ -117,6 +119,7 @@ void hit_instance(GameInstance *inst, int damage) {
 	inst->hit(damage);
 	if (inst->get_hp() <= 0) {
 		InstancesList[instance_get_number(inst)] = noone;
+		++CurrKills;
 	}
 }
 void instance_face_towards(GameInstance* inst, GameInstance* target) {
@@ -232,6 +235,14 @@ void resume_game_timers() {
 	for (int i = 0; i < int(GameTimers.size()); ++i) iResumeTimer(GameTimers[i]);
 }
 
+void pause_all_timers() {
+	for (int i = 0; i < int(AllTimers.size()); ++i) iPauseTimer(AllTimers[i]);
+}
+
+void resume_all_timers() {
+	for (int i = 0; i < int(AllTimers.size()); ++i) iResumeTimer(AllTimers[i]);
+}
+
 void timer_step1() {
 	// Game
 	++GameTimer;
@@ -275,6 +286,13 @@ void timers_init() {
 	Timer100 = iSetTimer(100, timer_step100);
 	Timer500 = iSetTimer(500, timer_step500);
 	
+	// All Timers
+	AllTimers.push_back(Timer1);
+	AllTimers.push_back(Timer100);
+	AllTimers.push_back(Timer500);
+
+
+	// Game Timers
 	GameTimers.push_back(Timer500);
 }
 
@@ -285,9 +303,14 @@ void rooms_init() {
 		function<void(void)>([](void) {
 			options.clear();
 
+			// Sound
+			PlaySound("Audio/aMenubg.wav", NULL, SND_ASYNC | SND_LOOP);
+
 			// Menu Init	
 			options.push_back(make_pair("Play", function<void(void)>([](void){
 					Level = 1;
+					Tries = 0;
+					Kills = 0;
 					room_goto(rGame);
 				})
 			));
@@ -350,6 +373,12 @@ void rooms_init() {
 	rGame = new Room("Game",
 		// Create
 		function<void(void)>([](void) {
+			// Globals
+			CurrKills = 0;
+
+			// Sound
+			PlaySound("Audio/aWind.wav", NULL, SND_ASYNC | SND_LOOP);
+
 			// Clear Instances
 			InstancesList.clear();
 
@@ -402,6 +431,7 @@ void rooms_init() {
 		function<void(void)>([](void) {
 			if (restart) {
 				input_refresh();
+				++Tries;
 				room_goto(rGame);
 			}
 			// Handle movement
@@ -455,6 +485,8 @@ void rooms_init() {
 								// Check for bone
 								if ((r == BonePos[0]) && (c == BonePos[1])) {
 									++Level;
+									Kills += CurrKills;
+									CurrKills = 0;
 									room_goto(rGame);
 								}
 							}
@@ -538,8 +570,6 @@ void rooms_init() {
 
 					// Ground
 					draw_sprite(coord_x(j), coord_y(i)-64, spr);
-					//draw_set_color(c_white);
-					//draw_rectangle(coord_x(j), coord_y(i), CELL_WIDTH, CELL_HEIGHT);
 
 					// Bone
 					if ((BonePos[0] == i) && (BonePos[1] == j)) draw_sprite_at_cell(i, j, sBone, BoneScale);
@@ -562,12 +592,37 @@ void rooms_init() {
 				}
 			}
 
-			// Level
-			draw_rectangle_color(0, 0, 118, 38, c_black, true);
+			// Instructions
+			draw_sprite(0, 0, levelInstruction);
 
-			string str = to_string(long long(Level));
+			int rw, rh, rx, ry, buff = 10;
+			string str;
+
+			// Level
+			rw = 110, rh = 30;
+			rx = WIN_WIDTH-rw, ry = WIN_HEIGHT-rh;
+			draw_rectangle_color(rx, ry, rw, rh, c_black, true);
+
+			str = to_string(long long(Level));
 			str = string(max(0, 3-string_length(str)), '0') + str;
-			draw_text_color(10, 10, "Level: " + str, c_white);
+			draw_text_general(rx+buff, ry+buff, "Level: " + str, c_white, GLUT_BITMAP_9_BY_15);
+
+			// Tries
+			ry -= rh-buff;
+			draw_rectangle_color(rx, ry, rw, rh, c_black, true);
+
+			str = to_string(long long(Tries));
+			str = string(max(0, 3-string_length(str)), '0') + str;
+			draw_text_general(rx+buff, ry+buff, "Tries: " + str, c_white, GLUT_BITMAP_9_BY_15);
+
+			// Kills
+			ry -= rh-buff;
+			draw_rectangle_color(rx, ry, rw, rh, c_black, true);
+
+			str = to_string(long long(Kills+CurrKills));
+			str = string(max(0, 3-string_length(str)), '0') + str;
+			draw_text_general(rx+buff, ry+buff, "Kills: " + str, c_white, GLUT_BITMAP_9_BY_15);
+
 			#pragma endregion
 		})
 	);
@@ -600,8 +655,9 @@ void rooms_init() {
 		// Step
 		function<void(void)>([](void) {
 			if (restart) {
-				room_goto(rGame);
 				input_refresh();
+				++Tries;
+				room_goto(rGame);
 			}
 		}),
 		// Draw
@@ -646,6 +702,29 @@ void game_init() {
 	room_goto(rMenu);
 }
 
+void handle_pausing() {
+	if (room != rGame) return;
+	if (pause) {
+		Paused = !Paused;
+		if (Paused) pause_all_timers();
+			else resume_all_timers();
+		input_refresh();
+	}
+	if (Paused) {
+		int rw, rh, rx, ry;
+
+		rw = 164, rh = 44;
+		rx = (WIN_WIDTH-rw)/2, ry = (WIN_HEIGHT-rh)/2;
+		draw_rectangle_color(rx, ry, rw, rh, c_white, true);
+
+		rw = 160, rh = 40;
+		rx = (WIN_WIDTH-rw)/2, ry = (WIN_HEIGHT-rh)/2;
+		draw_rectangle_color(rx, ry, rw, rh, c_black, true);
+
+		string str = "PAUSED!";
+		draw_text_color(WIN_WIDTH/2 - string_width(str,14)/2, WIN_HEIGHT/2-9, str, c_white);
+	}
+}
 
 // ------------------- iGraphics
 
@@ -660,6 +739,9 @@ void iDraw() {
 
 	// Room
 	room->draw();
+
+	// Pause
+	handle_pausing();
 }
 
 int main() {
