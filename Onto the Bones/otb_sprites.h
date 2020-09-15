@@ -83,7 +83,7 @@ void sprites_init() {
 	sPlayer = new Sprite(37, 32, "Sprites/sDog1.png|sDog2.png", 3);
 	sBat    = new Sprite(32, 32, "Sprites/sBat1.png|sBat2.png|sBat1.png");
 	sSnail  = new Sprite(41, 31, "Sprites/sSnail1.png|sSnail2.png|sSnail3.png");
-	sHound  = new Sprite(57, 32, "Sprites/sHound1.png|sHound3.png", -4);
+	sHound  = new Sprite(57, 32, "Sprites/sHound1.png|sHound4.png", -4);
 
 	sBone		= new Sprite(24, 24, "Sprites/sBone.png");
 	sHeartFull  = new Sprite(16, 16, "Sprites/sHeartFull.png");

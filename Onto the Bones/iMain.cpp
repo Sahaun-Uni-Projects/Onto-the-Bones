@@ -10,6 +10,16 @@
 #define __INIT
 #endif
 
+/*
+|-------|------|----|-------|
+| Enemy | Char | HP | Moves |
+|-------|------|----|-------|
+|  Bat  |  a   | 1  |   3   |
+| Hound |  b   | 2  |   2   |
+| Snail |  c   | 3  |   1   |
+|-------|------|----|-------|
+*/
+
 // ------------------- Important Stuff
 
 #pragma region Macros
@@ -20,7 +30,7 @@
 #define WIN_TITLE  "Onto the Bones"
 
 #define GAME_STEP_TIMER 100
-#define PLAYER_MAX_HP 5
+#define PLAYER_MAX_HP 1
 
 #define CELL_WIDTH 48
 #define CELL_HEIGHT 32
@@ -69,7 +79,6 @@ int optionSelected, optionsCount;
 GameInstance *player, *noone;
 queue<int> InputQueue;
 #pragma endregion
-
 
 // ------------------- Functions
 
@@ -257,6 +266,7 @@ void log_vec2d(vector<vector<int>> grid) {
 	cout << "<<<<<<<<<<<<<<<<<\n";
 }
 #pragma endregion
+
 
 // ------------------- Game Init
 
