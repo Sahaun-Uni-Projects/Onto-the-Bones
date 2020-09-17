@@ -76,7 +76,7 @@ Sprite *sBat, *sSnail, *sHound;
 Sprite *sBone;
 Sprite *sHeartFull, *sHeartEmpty;
 Sprite *sGround, *sGroundAlert, *sGroundHighlighted;
-Sprite *bgSky;
+Sprite *bgSky, *bgCredits, *bgHighscores;
 
 void sprites_init() {
 	sNoone  = new Sprite(16, 16, "Sprites/sNoone.png");
@@ -92,8 +92,10 @@ void sprites_init() {
 	sGround			   = new Sprite(48, 96, "Sprites/sGround.png");
 	sGroundAlert	   = new Sprite(48, 96, "Sprites/sGroundAlert.png");
 	sGroundHighlighted = new Sprite(48, 96, "Sprites/sGroundHighlighted.png");
-
+	
 	bgSky = new Sprite(1350, 540, "Sprites/bgSky.png");
+	bgCredits = new Sprite(960, 540, "Sprites/bgCredits.png");
+	bgHighscores = new Sprite(960, 540, "Sprites/bgHighscores.png");
 }
 
 void draw_sprite_ext(int x, int y, Sprite* spr, int xscale, int yscale) {

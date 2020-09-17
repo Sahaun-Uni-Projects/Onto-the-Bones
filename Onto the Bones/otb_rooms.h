@@ -30,7 +30,7 @@ class Room {
 };
 
 Room *room;
-Room *rMenu, *rGame, *rGameOver, *rHighscores;
+Room *rMenu, *rGame, *rGameWin, *rGameOver, *rHighscore, *rCredits;
 
 // Functions
 void room_goto(Room* targRoom, bool exec = true) {

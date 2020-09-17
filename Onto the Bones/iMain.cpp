@@ -4,8 +4,8 @@
 #include <string.h>
 #include <vector>
 #include <queue>
-#include <unordered_map>
 #include <functional>
+#include <fstream>
 #include "iGraphics.h"
 #define __INIT
 #endif
@@ -30,13 +30,14 @@
 #define WIN_TITLE  "Onto the Bones"
 
 #define GAME_STEP_TIMER 100
-#define PLAYER_MAX_HP 1
+#define PLAYER_MAX_HP 5
 
 #define CELL_WIDTH 48
 #define CELL_HEIGHT 32
-
 #define LEVEL_LAYOUT_DELIMITER ' '
 
+#define MAX_HIGHSCORE_COUNT 8
+#define FILE_HIGHSCORE "highscores.sav"
 #pragma endregion
 
 #pragma region Dependencies
@@ -48,6 +49,7 @@
 #include "otb_instances.h"
 #include "otb_rooms.h"
 #include "otb_levels.h"
+#include "otb_highscores.h"
 
 using namespace std;
 #pragma endregion
@@ -316,7 +318,12 @@ void rooms_init() {
 			));
 					
 			options.push_back(make_pair("Highscores", function<void(void)>([](void){
-					room_goto(rHighscores);
+					room_goto(rHighscore);
+				})
+			));
+					
+			options.push_back(make_pair("Credits", function<void(void)>([](void){
+					room_goto(rCredits);
 				})
 			));
 
@@ -373,6 +380,15 @@ void rooms_init() {
 	rGame = new Room("Game",
 		// Create
 		function<void(void)>([](void) {
+			// Get layout
+			vector<string> layout = get_level_layout(Level);
+
+			// Check for game end
+			if (layout.empty()) {
+				room_goto(rHighscore);
+				return;
+			}
+
 			// Globals
 			CurrKills = 0;
 
@@ -390,7 +406,7 @@ void rooms_init() {
 			input_refresh();
 
 			// Initialize World
-			Grid = world_init(get_level_layout(Level));
+			Grid = world_init(layout);
 			HeatMap = vector<vector<int>>(GridRows, vector<int>(GridCols, INFINITY));
 			HeatMap = generate_heatmap(player);
 	
@@ -602,26 +618,17 @@ void rooms_init() {
 			rw = 110, rh = 30;
 			rx = WIN_WIDTH-rw, ry = WIN_HEIGHT-rh;
 			draw_rectangle_color(rx, ry, rw, rh, c_black, true);
-
-			str = to_string(long long(Level));
-			str = string(max(0, 3-string_length(str)), '0') + str;
-			draw_text_general(rx+buff, ry+buff, "Level: " + str, c_white, GLUT_BITMAP_9_BY_15);
-
-			// Tries
-			ry -= rh-buff;
-			draw_rectangle_color(rx, ry, rw, rh, c_black, true);
-
-			str = to_string(long long(Tries));
-			str = string(max(0, 3-string_length(str)), '0') + str;
-			draw_text_general(rx+buff, ry+buff, "Tries: " + str, c_white, GLUT_BITMAP_9_BY_15);
+			draw_text_general(rx+buff, ry+buff, "Level: " + string_format(Level,3), c_white, GLUT_BITMAP_9_BY_15);
 
 			// Kills
 			ry -= rh-buff;
 			draw_rectangle_color(rx, ry, rw, rh, c_black, true);
+			draw_text_general(rx+buff, ry+buff, "Kills: " + string_format(Kills,3), c_white, GLUT_BITMAP_9_BY_15);
 
-			str = to_string(long long(Kills+CurrKills));
-			str = string(max(0, 3-string_length(str)), '0') + str;
-			draw_text_general(rx+buff, ry+buff, "Kills: " + str, c_white, GLUT_BITMAP_9_BY_15);
+			// Tries
+			ry -= rh-buff;
+			draw_rectangle_color(rx, ry, rw, rh, c_black, true);
+			draw_text_general(rx+buff, ry+buff, "Tries: " + string_format(Tries,3), c_white, GLUT_BITMAP_9_BY_15);
 
 			#pragma endregion
 		})
@@ -629,7 +636,71 @@ void rooms_init() {
 	#pragma endregion
 	
 	#pragma region rHighscores
-	rHighscores = new Room("Highscores",
+	rHighscore = new Room("Highscores",
+		// Create
+		function<void(void)>([](void) {
+			// Sound
+			// PlaySound("Audio/aMenubg.wav", NULL, SND_ASYNC | SND_LOOP);
+
+			// Highscore
+			Highscores.clear();
+			highscore_push(Score("ghjgh", 456, 213));
+			highscore_push(Score(",mn", 999, 23));
+			highscore_push(Score("jhg", 100, 213));
+			highscore_push(Score("redstg", 456, 34));
+			highscore_push(Score("fcvb", 999, 213));
+			highscore_push(Score("nbvmh", 456, 23));
+			highscore_push(Score("ytu", 999, 999));
+			highscore_push(Score("fsdfsdsd", 100, 213));
+			highscore_push(Score("sdfsdfsdf", 456, 123));
+			highscore_push(Score("qwe", 999, 43));
+			highscore_push(Score("qweq", 456, 123213));
+		}),
+		// Step
+		function<void(void)>([](void) {
+			if (pause) {
+				input_refresh();
+				room_goto(rMenu);
+			}
+		}),
+		// Draw
+		function<void(void)>([](void) {
+			draw_sprite(0, 0, bgHighscores);
+
+			int hy = 350, buff = 40;
+
+			for (int i = 0; i < int(Highscores.size()); ++i) {
+				draw_text_color(200, hy, Highscores[i].name, c_black);
+				draw_text_color(515, hy, string_format(Highscores[i].kills,3), c_black);
+				draw_text_color(715, hy, string_format(Highscores[i].tries,3), c_black);
+				hy -= buff;	
+			}
+		})
+	);
+	#pragma endregion
+
+	#pragma region rCredits
+	rCredits = new Room("Credits",
+		// Create
+		function<void(void)>([](void) {
+			
+		}),
+		// Step
+		function<void(void)>([](void) {
+			if (pause) {
+				input_refresh();
+				room_goto(rMenu);
+			}
+		}),
+		// Draw
+		function<void(void)>([](void) {
+			draw_sprite(0, 0, bgCredits);
+		})
+	);
+	#pragma endregion
+
+	#pragma region rGameWin
+	rGameWin = new Room("GameWin",
 		// Create
 		function<void(void)>([](void) {
 			
