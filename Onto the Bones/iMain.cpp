@@ -593,9 +593,26 @@ void rooms_init() {
 			}
 	
 			// Instances
+			vector<GameInstance*> depthList;
 			for (int i = 0; i < int(InstancesList.size()); ++i) {
-				GameInstance* inst = InstancesList[i];
+				depthList.push_back(InstancesList[i]);
+			}
+			sort(depthList.begin(), depthList.end(), [](GameInstance* inst1, GameInstance* inst2)->bool {
+				int r1 = inst1->get_row(), r2 = inst2->get_row();
+				int c1 = inst1->get_col(), c2 = inst2->get_col();
+				if (r1 == r2) return (c1 > c2);
+					else return (r1 > r2);
+			});
+
+			for (int i = 0; i < int(depthList.size()); ++i) {
+				GameInstance* inst = depthList[i];
 				draw_instance(inst, 0, 12);
+
+				// Draw HP
+				if (inst->get_object_type() == ENEMY) {
+					Sprite* spr = sHP[inst->get_hp()];
+					draw_sprite(coord_x(inst->get_col())+(CELL_WIDTH-spr->get_width())/2, coord_y(inst->get_row())+45, spr);
+				}
 			}
 
 			#pragma region UI

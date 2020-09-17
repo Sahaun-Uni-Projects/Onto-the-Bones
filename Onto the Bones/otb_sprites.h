@@ -21,7 +21,7 @@ class Sprite {
 	}
 
 	public:
-		Sprite(int width, int height, char* path, int xoffset = 0, int yoffset = 0) : width(width), height(height), path(path), xoffset(xoffset), yoffset(yoffset) {
+		Sprite(int width, int height, std::string path, int xoffset = 0, int yoffset = 0) : width(width), height(height), path(path), xoffset(xoffset), yoffset(yoffset) {
 			parse_path();
 			image_index = 0;
 			image_number = textures.size();
@@ -77,6 +77,7 @@ Sprite *sBone;
 Sprite *sHeartFull, *sHeartEmpty;
 Sprite *sGround, *sGroundAlert, *sGroundHighlighted;
 Sprite *bgSky, *bgCredits, *bgHighscores;
+Sprite *sHP[4];
 
 void sprites_init() {
 	sNoone  = new Sprite(16, 16, "Sprites/sNoone.png");
@@ -96,6 +97,13 @@ void sprites_init() {
 	bgSky = new Sprite(1350, 540, "Sprites/bgSky.png");
 	bgCredits = new Sprite(960, 540, "Sprites/bgCredits.png");
 	bgHighscores = new Sprite(960, 540, "Sprites/bgHighscores.png");
+	
+	int width = 9, inc = 7;
+	sHP[0] = sNoone;
+	for (int i = 1; i <= 3; ++i) {
+		sHP[i] = new Sprite(width, 9, "Sprites/sHP"+std::to_string(long long(i))+".png");
+		width += inc;
+	}
 }
 
 void draw_sprite_ext(int x, int y, Sprite* spr, int xscale, int yscale) {

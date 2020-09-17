@@ -9,7 +9,7 @@ std::vector<std::string> get_level_layout(int level) {
 			layout.push_back("P 1 1 1 1 1 1 1 1 1 1 1 1 G");
 		break;
 
-		case 200:			
+		case 2:			
 			layout.push_back("0 0 0 0 1 1 1 0 1");
 			layout.push_back("0 0 0 0 1 0 0 0 1");
 			layout.push_back("0 0 0 0 1 0 1 1 1");
