@@ -22,6 +22,14 @@ void highscore_clear() {
 	Highscores.clear();
 }
 
+void highscore_prune() {
+	std::sort(Highscores.begin(), Highscores.end(), [](Score& s1, Score& s2) -> bool {
+		if (s1.kills == s2.kills) return (s1.tries < s2.tries);
+		return (s1.kills > s2.kills);
+	});
+	while (int(Highscores.size()) > MAX_HIGHSCORE_COUNT) Highscores.pop_back();
+}
+
 void highscore_save() {
 	remove(FILE_HIGHSCORE);
 	fileHighscore.open(FILE_HIGHSCORE, std::fstream::in | std::fstream::out | std::fstream::app);
@@ -31,11 +39,7 @@ void highscore_save() {
 
 void highscore_push(Score& score) {
 	Highscores.push_back(score);
-	std::sort(Highscores.begin(), Highscores.end(), [](Score& s1, Score& s2) -> bool {
-		if (s1.kills == s2.kills) return (s1.tries < s2.tries);
-		return (s1.kills > s2.kills);
-	});
-	while (int(Highscores.size()) > MAX_HIGHSCORE_COUNT) Highscores.pop_back();
+	highscore_prune();
 	highscore_save();
 }
 
@@ -45,6 +49,8 @@ void highscore_load() {
 	Score score;
 
 	fileHighscore.open(FILE_HIGHSCORE, std::fstream::in | std::fstream::out | std::fstream::app);
-	while (fileHighscore >> score) highscore_push(score);
+	while (fileHighscore >> score) Highscores.push_back(score);
 	fileHighscore.close();
+
+	highscore_prune();
 }

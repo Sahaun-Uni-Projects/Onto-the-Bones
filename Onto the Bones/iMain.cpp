@@ -30,7 +30,7 @@
 #define WIN_TITLE  "Onto the Bones"
 
 #define GAME_STEP_TIMER 100
-#define PLAYER_MAX_HP 5
+#define PLAYER_MAX_HP 1
 
 #define CELL_WIDTH 48
 #define CELL_HEIGHT 32
@@ -38,6 +38,7 @@
 
 #define MAX_HIGHSCORE_COUNT 8
 #define FILE_HIGHSCORE "highscores.sav"
+#define MAX_NAME_LENGTH 10
 #pragma endregion
 
 #pragma region Dependencies
@@ -144,7 +145,7 @@ vector<vector<int>> world_init(vector<string>& temp, char delimiter = LEVEL_LAYO
 
 			// Put a character or tile
 			switch (temp[i][j]) {
-				case 'P': player = instance_create(r, c, 2, PLAYER_MAX_HP, sPlayer, PLAYER); break;
+				case 'P': player = instance_create(r, c, 2, 1, sPlayer, PLAYER); break;
 				case 'G': BonePos[0] = r; BonePos[1] = c; break;
 				
 				case 'a': instance_create(r, c,    3, 1,    sBat,   ENEMY); break;
@@ -293,7 +294,6 @@ void timers_init() {
 	AllTimers.push_back(Timer100);
 	AllTimers.push_back(Timer500);
 
-
 	// Game Timers
 	GameTimers.push_back(Timer500);
 }
@@ -385,7 +385,7 @@ void rooms_init() {
 
 			// Check for game end
 			if (layout.empty()) {
-				room_goto(rHighscore);
+				room_goto(rGameWin);
 				return;
 			}
 
@@ -640,7 +640,7 @@ void rooms_init() {
 			// Kills
 			ry -= rh-buff;
 			draw_rectangle_color(rx, ry, rw, rh, c_black, true);
-			draw_text_general(rx+buff, ry+buff, "Kills: " + string_format(Kills,3), c_white, GLUT_BITMAP_9_BY_15);
+			draw_text_general(rx+buff, ry+buff, "Kills: " + string_format(Kills+CurrKills,3), c_white, GLUT_BITMAP_9_BY_15);
 
 			// Tries
 			ry -= rh-buff;
@@ -656,22 +656,8 @@ void rooms_init() {
 	rHighscore = new Room("Highscores",
 		// Create
 		function<void(void)>([](void) {
-			// Sound
-			// PlaySound("Audio/aMenubg.wav", NULL, SND_ASYNC | SND_LOOP);
-
 			// Highscore
-			Highscores.clear();
-			highscore_push(Score("ghjgh", 456, 213));
-			highscore_push(Score(",mn", 999, 23));
-			highscore_push(Score("jhg", 100, 213));
-			highscore_push(Score("redstg", 456, 34));
-			highscore_push(Score("fcvb", 999, 213));
-			highscore_push(Score("nbvmh", 456, 23));
-			highscore_push(Score("ytu", 999, 999));
-			highscore_push(Score("fsdfsdsd", 100, 213));
-			highscore_push(Score("sdfsdfsdf", 456, 123));
-			highscore_push(Score("qwe", 999, 43));
-			highscore_push(Score("qweq", 456, 123213));
+			highscore_load();
 		}),
 		// Step
 		function<void(void)>([](void) {
@@ -692,6 +678,10 @@ void rooms_init() {
 				draw_text_color(715, hy, string_format(Highscores[i].tries,3), c_black);
 				hy -= buff;	
 			}
+
+			// Hint
+			string str = "Press Esc to return to main menu";
+			draw_text_general((WIN_WIDTH-string_width(str, 5))/2, 20, str, c_black, GLUT_BITMAP_HELVETICA_10);
 		})
 	);
 	#pragma endregion
@@ -712,6 +702,10 @@ void rooms_init() {
 		// Draw
 		function<void(void)>([](void) {
 			draw_sprite(0, 0, bgCredits);
+
+			// Hint
+			string str = "Press Esc to return to main menu";
+			draw_text_general((WIN_WIDTH-string_width(str, 5))/2, 20, str, c_black, GLUT_BITMAP_HELVETICA_10);
 		})
 	);
 	#pragma endregion
@@ -720,15 +714,55 @@ void rooms_init() {
 	rGameWin = new Room("GameWin",
 		// Create
 		function<void(void)>([](void) {
-			
+			// Sound
+			PlaySound("Audio/aMenubg.wav", NULL, SND_ASYNC | SND_LOOP);
+
+			// Reset
+			Name = "";
+			GameWon = false;
+			Typing = true;
 		}),
 		// Step
 		function<void(void)>([](void) {
-			
+			if (GameWon) {
+				// Submit highscore
+				highscore_push(Score(Name, Kills, Tries));
+				for (int i = 0; i < int(Highscores.size()); ++i) cout <<  Highscores[i] << "\n";
+
+				// Reset
+				Name = "";
+				GameWon = false;
+				Typing = false;
+
+				// Change room
+				room_goto(rHighscore);
+			}
 		}),
 		// Draw
 		function<void(void)>([](void) {
+			string str;
 			
+			// Congrats
+			str = "Congrats, you got all the bones!";
+			draw_text_color((WIN_WIDTH-string_width(str, 10))/2, 450, str, c_black);
+
+			// Hint
+			str = "Enter your name";
+			draw_text_general((WIN_WIDTH-string_width(str, 5))/2, 350, str, c_black, GLUT_BITMAP_HELVETICA_10);
+
+			// Name
+			int rw = 250, rh = 38;
+			int rx = (WIN_WIDTH-rw)/2, ry = 300;
+			draw_rectangle_color(rx, ry, rw, rh, c_black, true);
+			draw_text_color(rx+10, ry+10, Name, c_white);
+
+			// Char count
+			str = string_format(Name.size(),2) + "/10";
+			draw_text_general((WIN_WIDTH-string_width(str, 5))/2, 280, str, c_black, GLUT_BITMAP_HELVETICA_10);
+
+			// Hint
+			str = "Press Enter to continue";
+			draw_text_general((WIN_WIDTH-string_width(str, 5))/2, 20, str, c_black, GLUT_BITMAP_HELVETICA_10);
 		})
 	);
 	#pragma endregion
@@ -773,6 +807,12 @@ void rooms_init() {
 }
 
 void game_init() {
+	// Globals
+	Paused = false;
+
+	// Input
+	input_refresh();
+
 	// Load sprites
 	sprites_init();
 
@@ -799,6 +839,12 @@ void handle_pausing() {
 		input_refresh();
 	}
 	if (Paused) {
+		if (interact) {
+			// Restart game
+			game_init();
+		}
+
+		// Draw
 		int rw, rh, rx, ry;
 
 		rw = 164, rh = 44;
@@ -811,6 +857,10 @@ void handle_pausing() {
 
 		string str = "PAUSED!";
 		draw_text_color(WIN_WIDTH/2 - string_width(str,14)/2, WIN_HEIGHT/2-9, str, c_white);
+
+		// Hint
+		str = "Press Enter to return to main menu";
+		draw_text_general((WIN_WIDTH-string_width(str, 5))/2, 20, str, c_black, GLUT_BITMAP_HELVETICA_10);
 	}
 }
 
