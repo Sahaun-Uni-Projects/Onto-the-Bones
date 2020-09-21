@@ -70,9 +70,9 @@ std::vector<std::string> get_level_layout(int level) {
 			layout.push_back("0 0 0 0 1 1 1 0 0 0 0");
 			layout.push_back("0 0 0 0 1 1 1 0 0 0 0");
 			layout.push_back("0 0 0 0 1 1 c 0 0 0 0");
-			layout.push_back("1 1 1 1 1 c 1 1 1 1 0");
-			layout.push_back("P 1 1 1 c G 1 1 1 1 0");
-			layout.push_back("1 1 1 1 1 c 1 1 1 1 0");
+			layout.push_back("1 1 1 1 1 c 1 1 1 1 1");
+			layout.push_back("P 1 1 1 c G 1 1 1 1 1");
+			layout.push_back("1 1 1 1 1 c 1 1 1 1 1");
 			layout.push_back("0 0 0 0 1 1 c 0 0 0 0");
 			layout.push_back("0 0 0 0 1 1 1 0 0 0 0");
 			layout.push_back("0 0 0 0 1 1 1 0 0 0 0");

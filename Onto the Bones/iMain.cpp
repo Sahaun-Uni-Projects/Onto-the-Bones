@@ -80,6 +80,10 @@ bool Paused = false;
 vector<pair<string, function<void(void)>>> options;
 int optionSelected, optionsCount;
 
+// Instructions
+int InsPage;
+vector<Sprite*> InsSprites;
+
 // Instances
 GameInstance *player, *noone;
 queue<int> InputQueue;
@@ -145,7 +149,7 @@ vector<vector<int>> world_init(vector<string>& temp, char delimiter = LEVEL_LAYO
 
 			// Put a character or tile
 			switch (temp[i][j]) {
-				case 'P': player = instance_create(r, c, 2, 1, sPlayer, PLAYER); break;
+				case 'P': player = instance_create(r, c, 2, 1, sPug, PLAYER); break;
 				case 'G': BonePos[0] = r; BonePos[1] = c; break;
 				
 				case 'a': instance_create(r, c,    3, 1,    sBat,   ENEMY); break;
@@ -322,6 +326,11 @@ void rooms_init() {
 				})
 			));
 					
+			options.push_back(make_pair("Instructions", function<void(void)>([](void){
+					room_goto(rInstructions);
+				})
+			));
+					
 			options.push_back(make_pair("Credits", function<void(void)>([](void){
 					room_goto(rCredits);
 				})
@@ -364,8 +373,13 @@ void rooms_init() {
 			for (int i = 0; i < optionsCount; ++i) {
 				text = to_cstring(options[i].first);
 
+				// Positions and offset
 				xx = tx - string_width(text)/2;
-				if (i == 0) xx += 3;
+				switch (i) {
+					case 0: xx += 3; break;
+					case 2: xx += 7; break;
+					default: break;
+				}
 
 				if (i == optionSelected) draw_text_color(xx-20, ty+2, ">", c_black);
 				draw_text_color(xx, ty, text, c_black);
@@ -545,15 +559,16 @@ void rooms_init() {
 						InputQueue.pop();
 						inst->animate();
 
-						// Face towards player
-						if (instance_exists(player)) {
-							if (InputQueue.empty() || (!InputQueue.empty() && (InputQueue.front() != instance_get_number(inst)))) {
-								instance_face_towards(inst, player);
-							}
+						// If move has ended
+						if (InputQueue.empty() || (!InputQueue.empty() && (InputQueue.front() != instance_get_number(inst)))) {
+							// Face towards player
+							if (instance_exists(player)) {
+									instance_face_towards(inst, player);
 
-							// Generate HeatMap
-							HeatMap = generate_heatmap(player);
-							log_vec2d(HeatMap);
+								// Generate HeatMap
+								HeatMap = generate_heatmap(player);
+								log_vec2d(HeatMap);
+							}
 						}
 					}
 				}
@@ -626,7 +641,7 @@ void rooms_init() {
 			}
 
 			// Instructions
-			draw_sprite(0, 0, levelInstruction);
+			//draw_sprite(0, 0, levelInstruction);
 
 			int rw, rh, rx, ry, buff = 10;
 			string str;
@@ -686,6 +701,67 @@ void rooms_init() {
 	);
 	#pragma endregion
 
+	#pragma region rInstructions
+	rInstructions = new Room("Instructions",
+		// Create
+		function<void(void)>([](void) {
+			InsPage = 0;
+
+			//  Sprites
+			InsSprites.push_back(sPug);
+			InsSprites.push_back(sBat);
+			InsSprites.push_back(sHoundFull);
+			InsSprites.push_back(sSnail);
+		}),
+		// Step
+		function<void(void)>([](void) {
+			if (pause) {
+				input_refresh();
+				room_goto(rMenu);
+				return;
+			}
+			if (abs(hdir)) {
+				InsPage ^= 1;
+				input_refresh();
+			}
+
+			for (int i = 0; i < int(InsSprites.size()); ++i) {
+				Sprite *spr = InsSprites[i];
+				spr->change_index_relative(1);
+			}
+		}),
+		// Draw
+		function<void(void)>([](void) {
+			// Back
+			draw_sprite(0, 0, bgInstructions[InsPage]);
+
+			// Characters
+			int cx, cy, cbuff;
+			if (InsPage == 0) {
+				cx = 120;
+				cy = 260;
+				cbuff = -54;
+				for (int i = 0; i < int(InsSprites.size()); ++i) {
+					Sprite *spr = InsSprites[i];
+					draw_sprite(cx - (i == 2)*10, cy- (i == 3)*20, spr);
+					cy += cbuff;
+				}
+			}
+
+			// Level
+			int rw, rh, rx, ry, rbuff = 10;
+			rw = 100, rh = 30;
+			rx = WIN_WIDTH-rw, ry = WIN_HEIGHT-rh;
+			draw_rectangle_color(rx, ry, rw, rh, c_black, true);
+			draw_text_general(rx+rbuff, ry+rbuff, "Page: " + string_format(InsPage+1,1) + "/2", c_white, GLUT_BITMAP_9_BY_15);
+
+			// Hint
+			string str = "Press Esc to return to main menu";
+			draw_text_general((WIN_WIDTH-string_width(str, 5))/2, 20, str, c_black, GLUT_BITMAP_HELVETICA_10);
+		})
+	);
+	#pragma endregion
+
 	#pragma region rCredits
 	rCredits = new Room("Credits",
 		// Create
@@ -724,7 +800,7 @@ void rooms_init() {
 		}),
 		// Step
 		function<void(void)>([](void) {
-			if (GameWon) {
+			if (GameWon && (Name != "")) {
 				// Submit highscore
 				highscore_push(Score(Name, Kills, Tries));
 				for (int i = 0; i < int(Highscores.size()); ++i) cout <<  Highscores[i] << "\n";
@@ -827,7 +903,7 @@ void game_init() {
 	// Load rooms
 	Level = 1;
 	rooms_init();
-	room_goto(rMenu);
+	room_goto(rInstructions);
 }
 
 void handle_pausing() {

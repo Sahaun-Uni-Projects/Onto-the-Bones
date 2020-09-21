@@ -53,6 +53,10 @@ class Sprite {
 				else if (this->image_index < 0) this->image_index = this->image_number-1;
 		}
 
+		int get_image_number() {
+			return this->image_number;
+		}
+
 		int get_tex() {
 			return this->textures[image_index];
 		}
@@ -71,20 +75,21 @@ class Sprite {
 };
 
 Sprite *sNoone;
-Sprite *sPlayer;
-Sprite *sBat, *sSnail, *sHound;
+Sprite *sPug;
+Sprite *sBat, *sHound, *sHoundFull, *sSnail;
 Sprite *sBone;
 Sprite *sHeartFull, *sHeartEmpty;
 Sprite *sGround, *sGroundAlert, *sGroundHighlighted;
-Sprite *bgSky, *bgCredits, *bgHighscores;
+Sprite *bgSky, *bgCredits, *bgHighscores, *bgInstructions[2];
 Sprite *sHP[4];
 
 void sprites_init() {
 	sNoone  = new Sprite(16, 16, "Sprites/sNoone.png");
-	sPlayer = new Sprite(37, 32, "Sprites/sDog1.png|sDog2.png", 3);
+	sPug	= new Sprite(37, 32, "Sprites/sPug1.png|sPug2.png", 3);
 	sBat    = new Sprite(32, 32, "Sprites/sBat1.png|sBat2.png|sBat1.png");
 	sSnail  = new Sprite(41, 31, "Sprites/sSnail1.png|sSnail2.png|sSnail3.png");
 	sHound  = new Sprite(57, 32, "Sprites/sHound1.png|sHound4.png", -4);
+	sHoundFull = new Sprite(57, 32, "Sprites/sHound1.png|sHound2.png|sHound3.png|sHound4.png", -4);
 
 	sBone		= new Sprite(24, 24, "Sprites/sBone.png");
 	sHeartFull  = new Sprite(16, 16, "Sprites/sHeartFull.png");
@@ -97,6 +102,8 @@ void sprites_init() {
 	bgSky = new Sprite(1350, 540, "Sprites/bgSky.png");
 	bgCredits = new Sprite(960, 540, "Sprites/bgCredits.png");
 	bgHighscores = new Sprite(960, 540, "Sprites/bgHighscores.png");
+	bgInstructions[0] = new Sprite(960, 540, "Sprites/bgInstructions.png");
+	bgInstructions[1] = new Sprite(960, 540, "Sprites/bgControls.png");
 	
 	int width = 9, inc = 7;
 	sHP[0] = sNoone;
