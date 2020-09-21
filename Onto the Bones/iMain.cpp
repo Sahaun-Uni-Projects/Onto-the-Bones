@@ -708,6 +708,7 @@ void rooms_init() {
 			InsPage = 0;
 
 			//  Sprites
+			InsSprites.clear();
 			InsSprites.push_back(sPug);
 			InsSprites.push_back(sBat);
 			InsSprites.push_back(sHoundFull);
@@ -903,7 +904,7 @@ void game_init() {
 	// Load rooms
 	Level = 1;
 	rooms_init();
-	room_goto(rInstructions);
+	room_goto(rMenu);
 }
 
 void handle_pausing() {
