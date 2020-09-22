@@ -57,7 +57,7 @@ using namespace std;
 
 #pragma region Globals
 // Timers
-int Timer1, Timer100, Timer500;
+int Timer1, Timer100, Timer400, Timer500;
 
 // Background
 int skyX[2];
@@ -79,6 +79,8 @@ bool Paused = false;
 // Menu
 vector<pair<string, function<void(void)>>> options;
 int optionSelected, optionsCount;
+int LogoPos[2], LogoBasePos[2], LogoAmplitudeRange[2];
+int LogoDir, LogoLen;
 
 // Instructions
 int InsPage;
@@ -260,9 +262,21 @@ void timer_step1() {
 		if ((skyX[i] -= skySpeed) <= -sw) skyX[i] = sw;
 	}
 }
+
 void timer_step100() {
 	room->step();
 }
+
+void timer_step400() {
+	// Move logo
+	LogoPos[1] += LogoDir;
+	if (!--LogoLen) {
+		LogoDir *= -1;
+		LogoLen = irandom_range(LogoAmplitudeRange[0], LogoAmplitudeRange[1]);
+	}
+	if (abs(LogoPos[1]-LogoBasePos[1]) >= 20) LogoDir *= -1;
+}
+
 void timer_step500() {
 	// Move game world
 	GamePos[1] += GameDir;
@@ -291,11 +305,13 @@ void log_vec2d(vector<vector<int>> grid) {
 void timers_init() {
 	Timer1   = iSetTimer(1,   timer_step1);
 	Timer100 = iSetTimer(100, timer_step100);
+	Timer400 = iSetTimer(400, timer_step400);
 	Timer500 = iSetTimer(500, timer_step500);
 	
 	// All Timers
 	AllTimers.push_back(Timer1);
 	AllTimers.push_back(Timer100);
+	AllTimers.push_back(Timer400);
 	AllTimers.push_back(Timer500);
 
 	// Game Timers
@@ -307,12 +323,22 @@ void rooms_init() {
 	rMenu = new Room("Menu",
 		// Create
 		function<void(void)>([](void) {
-			options.clear();
+			// Logo
+			LogoBasePos[0] = 0;
+			LogoBasePos[1] = 0;
+			LogoPos[0] = LogoBasePos[0];
+			LogoPos[1] = LogoBasePos[1];
+			LogoAmplitudeRange[0] = 2;
+			LogoAmplitudeRange[1] = 3;
+			LogoDir = irandom(1)*2-1;
+			LogoLen = irandom_range(LogoAmplitudeRange[0], LogoAmplitudeRange[1]);
 
 			// Sound
 			PlaySound("Audio/aMenubg.wav", NULL, SND_ASYNC | SND_LOOP);
 
 			// Menu Init	
+			options.clear();
+
 			options.push_back(make_pair("Play", function<void(void)>([](void){
 					Level = 1;
 					Tries = 0;
@@ -346,6 +372,9 @@ void rooms_init() {
 			
 			// Pause timer
 			pause_game_timers();
+
+			// Timer
+			iResumeTimer(Timer400);
 		}),
 		// Step
 		function<void(void)>([](void) {
@@ -365,8 +394,12 @@ void rooms_init() {
 		}),
 		// Draw
 		function<void(void)>([](void) {
+			// Logo
+			draw_sprite(LogoPos[0], LogoPos[1], sLogo);
+
 			// Text
-			int tx = WIN_WIDTH/2, ty = WIN_HEIGHT/2;
+			int tx = WIN_WIDTH/2, ty = WIN_HEIGHT/2 - 30;
+			int buff = 40;
 			int xx;
 			char* text;
 
@@ -384,7 +417,7 @@ void rooms_init() {
 				if (i == optionSelected) draw_text_color(xx-20, ty+2, ">", c_black);
 				draw_text_color(xx, ty, text, c_black);
 
-				ty -= 40;
+				ty -= buff;
 			}
 		})
 	);
@@ -631,6 +664,7 @@ void rooms_init() {
 			}
 
 			#pragma region UI
+			/*
 			// Lives
 			if (instance_exists(player)) {
 				int hx = 20, hy = 504;
@@ -639,6 +673,7 @@ void rooms_init() {
 					hx += 25;
 				}
 			}
+			*/
 
 			// Instructions
 			//draw_sprite(0, 0, levelInstruction);

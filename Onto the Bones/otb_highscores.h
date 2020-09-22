@@ -6,12 +6,12 @@ struct Score {
 	Score(std::string name, int kills, int tries) : name(name), kills(kills), tries(tries) {}
 
     friend std::istream& operator >> (std::istream& in, Score& score) {
-        in >> score.name >> score.tries >> score.kills;
+        in >> score.name >> score.kills >> score.tries;
         return in;
     }
 
     friend std::ostream& operator << (std::ostream& out, Score& score) {
-		out << score.name << " " << score.tries << " " << score.kills;
+		out << score.name << " " << score.kills << " " << score.tries;
         return out;
     }
 };

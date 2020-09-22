@@ -75,8 +75,8 @@ class Sprite {
 };
 
 Sprite *sNoone;
-Sprite *sPug;
-Sprite *sBat, *sHound, *sHoundFull, *sSnail;
+Sprite *sLogo;
+Sprite *sPug, *sBat, *sHound, *sHoundFull, *sSnail;
 Sprite *sBone;
 Sprite *sHeartFull, *sHeartEmpty;
 Sprite *sGround, *sGroundAlert, *sGroundHighlighted;
@@ -85,6 +85,8 @@ Sprite *sHP[4];
 
 void sprites_init() {
 	sNoone  = new Sprite(16, 16, "Sprites/sNoone.png");
+	sLogo   = new Sprite(960, 540, "Sprites/sLogo.png");
+
 	sPug	= new Sprite(37, 32, "Sprites/sPug1.png|sPug2.png", 3);
 	sBat    = new Sprite(32, 32, "Sprites/sBat1.png|sBat2.png|sBat1.png");
 	sSnail  = new Sprite(41, 31, "Sprites/sSnail1.png|sSnail2.png|sSnail3.png");
