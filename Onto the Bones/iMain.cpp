@@ -663,6 +663,11 @@ void rooms_init() {
 				}
 			}
 
+			if (Paused) {
+				// Do not draw UI
+				return;
+			}
+
 			#pragma region UI
 			/*
 			// Lives

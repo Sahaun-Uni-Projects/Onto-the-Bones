@@ -53,4 +53,5 @@ void highscore_load() {
 	fileHighscore.close();
 
 	highscore_prune();
+	highscore_save();
 }

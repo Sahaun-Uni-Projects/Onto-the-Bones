@@ -37,13 +37,6 @@ std::vector<std::string> get_level_layout(int level) {
 		break;
 
 		case 5:
-			layout.push_back("1 1 1 0 0 1 1 1 0 a 1");
-			layout.push_back("1 1 1 0 0 1 1 1 0 1 1");
-			layout.push_back("P 1 1 1 1 1 0 1 0 1 G");
-			layout.push_back("1 1 1 0 0 1 0 1 1 1 0");
-		break;
-
-		case 6:
 			layout.push_back("0 0 0 0 1 1 1 0 0 0 0");
 			layout.push_back("0 0 0 0 1 1 1 0 0 0 0");
 			layout.push_back("0 0 0 0 1 1 1 0 0 0 0");
@@ -57,6 +50,13 @@ std::vector<std::string> get_level_layout(int level) {
 			layout.push_back("0 0 0 0 1 1 1 0 0 0 0");
 		break;
 
+		case 6:
+			layout.push_back("1 1 1 0 0 1 1 1 0 a 1");
+			layout.push_back("1 1 1 0 0 1 1 1 0 1 1");
+			layout.push_back("P 1 1 1 1 1 0 1 0 1 G");
+			layout.push_back("1 1 1 0 0 1 0 1 1 1 0");
+		break;
+
 		case 7:
 			layout.push_back("c 1 1 1 1 b 1 1");
 			layout.push_back("1 0 0 1 1 0 0 1");
@@ -66,6 +66,12 @@ std::vector<std::string> get_level_layout(int level) {
 		break;
 
 		case 8:
+			layout.push_back("1 1 1 1 a");
+			layout.push_back("0 1 G 1 0");
+			layout.push_back("1 P 1 1 a");
+		break;
+
+		case 9:
 			layout.push_back("0 0 0 0 1 1 1 0 0 0 0");
 			layout.push_back("0 0 0 0 1 1 1 0 0 0 0");
 			layout.push_back("0 0 0 0 1 1 1 0 0 0 0");
