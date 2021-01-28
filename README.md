@@ -39,6 +39,7 @@ Highscore is sorted by the greater number of kills and lesser number of tries.
 The game is inspired by <a href="https://store.steampowered.com/app/590380/Into_the_Breach">Into the Breach</a>.
 
 Codewise, there are obvious indications of GameMaker Language (GML), the proprietary programming language of <a href="https://www.yoyogames.com/">GameMaker</a>.
+<br/><br/>
 
 # Contributors
 1. Ahnaf Abid Khan
