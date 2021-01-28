@@ -1,4 +1,4 @@
-# Intro
+# About
 
 <b>Onto the Bones</b> is a turn-based tactical game where you have to guide yourself, the pug, to the bones.
 
@@ -39,3 +39,9 @@ Highscore is sorted by the greater number of kills and lesser number of tries.
 The game is inspired by <a href="https://store.steampowered.com/app/590380/Into_the_Breach">Into the Breach</a>.
 
 Codewise, there are obvious indications of GameMaker Language (GML), the proprietary programming language of <a href="https://www.yoyogames.com/">GameMaker</a>.
+
+# Contributors
+1. Ahnaf Abid Khan
+2. Shahbaj Tamjid
+3. Shaharaj Uddin
+4. Sohom Sahaun
