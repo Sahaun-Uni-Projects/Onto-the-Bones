@@ -357,10 +357,10 @@ void rooms_init() {
 				})
 			));
 					
-			options.push_back(make_pair("Credits", function<void(void)>([](void){
+			/*options.push_back(make_pair("Credits", function<void(void)>([](void){
 					room_goto(rCredits);
 				})
-			));
+			));*/
 
 			options.push_back(make_pair("Quit", function<void(void)>([](void){
 					exit(0);
